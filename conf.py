@@ -36,8 +36,9 @@ PREDICTOR_LOADERS.update({'TMIN' + str(k): 'get_bio_data' for k in range(1, 13)}
 PREDICTOR_LOADERS.update({'PREC' + str(k): 'get_bio_data' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'TMAX' + str(k): 'get_bio_data' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'TAVG' + str(k): 'get_bio_data' for k in range(1, 13)})
-
-
+PREDICTOR_LOADERS.update({'WKI5': 'get_kiras_indecies'})
+PREDICTOR_LOADERS.update({'WKI7': 'get_kiras_indecies'})
+PREDICTOR_LOADERS.update({'WKI0': 'get_kiras_indecies'})
 
 
 
