@@ -3,8 +3,9 @@
 import numpy as np
 cimport numpy as np
 
-cdef double large_value=1000000000.0
+cdef double large_value = 10000.0
 
+# Deprecated in flavour of numpy indexing...
 cpdef np.ndarray[double, ndim=1] get_data_by_coordinate(np.ndarray [double, ndim=1] lats,
                                        np.ndarray [double, ndim=1] lons,
                                        np.ndarray [double, ndim=2] dataset,

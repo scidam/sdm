@@ -1,3 +1,4 @@
+species;countrycode;decimallatitude;decimallongitude
 Abies holophylla;KR;38.057089;128.598045
 Abies holophylla;KR;38.171895;128.474977
 Abies holophylla;RU;43.21666;131.96666
@@ -2866,7 +2867,6 @@ Quercus mongolica;JP;33.4792;133.019
 Quercus mongolica;JP;33.4792;133.031
 Quercus mongolica;JP;33.7458;133.356
 Quercus mongolica;JP;34.0329;133.812
-species;countrycode;decimallatitude;decimallongitude
 Tilia amurensis;CN;40.526351;116.154896
 Tilia amurensis;CN;43.683756;127.383846
 Tilia amurensis;CN;41.827587;123.416408

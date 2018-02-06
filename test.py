@@ -3,20 +3,20 @@ import numpy as np
 from pylab import *
 
 
+RESOLUTION = 2000
+lats, lons = np.meshgrid(np.linspace(25, 65, RESOLUTION),
+                         np.linspace(100, 165, RESOLUTION))
 
-lats, lons = np.meshgrid(np.linspace(25, 65, 5000), np.linspace(100, 165, 5000))
 
+values = get_predictor_data(lats.ravel(), lons.ravel(), 'WKI10')
 
+print("The number of negative occurences:", np.sum(values<0.0))
+print("The number of nan-occurences: ", np.sum(np.isnan(values)))
 
-values = get_predictor_data(lats.ravel(), lons.ravel(), 'WKI0')
 figure()
-contourf(lons, lats, values.reshape(5000,5000))
+contourf(lons, lats, values.reshape(RESOLUTION, RESOLUTION))
 colorbar()
-title('WKI0 heatmap')
-print("Hey")
-values = get_predictor_data(lats.ravel(), lons.ravel(), 'WKI5')
-figure()
-contourf(lons, lats, values.reshape(5000,5000))
-colorbar()
-title('WKI5 heatmap')
+title('WKI10')
+
+
 show()
