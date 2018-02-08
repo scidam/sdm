@@ -1,55 +1,66 @@
 
+# Basic model utilities
+
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import Imputer
+
+from absence import data
+from conf import DENSITY_UNIT
 import pandas as pd
 import numpy as np
 
 
-# path to a file with training data
-DATAFILE_PATH = './data/broad_leaf_GBIF.csv'
+class DensityTweaker(BaseEstimator, TransformerMixin):
+    def __init__(self, density=10):
+        '''
+        Decrease density of the train dataset according to the provided density.
 
-# a tuple of all predictors to be used in the model
-MODELING_VARIABLES = ('BIO')
+        :param
 
+          density -- a float value, allowed density in a 0.1x0.1 (lat x lon, in degrees)
+                     square
+        '''
+        self.density_ = density
 
-# ------------- Load the data --------------------------
+    def fit(self, df, y=None):
+        return self
 
-original_data = pd.read_csv(DATAFILE_PATH, sep=';')
-
-print(" ============== Original dataset overview ================")
-original_data.info()
-print("="*60)
-# ------------------------------------------------------
-
-
-
-# -------------- Data-preprocessing -----------------
-data = original_data[['species', 'decimallatitude', 'decimallongitude']]
-
-# remove nan-rows
-data = data.dropna()
-
-# remove duplicated rows
-data = data.drop_duplicates()
+    def transform(self, df, y=None):
+        return df
 
 
-# column names are too long, lets make them shorter...
-data = data.rename(index=str, columns={"decimallatitude": "lat",
-                                "decimallongitude": "lon"})
+class FillPseudoAbsenceData(BaseEstimator, TransformerMixin):
+    def __init__(self, density=10):
+        '''
+        Fill data frame with pseudo-absence data
+        '''
+        self.density_ = density
 
-# reset index
-data = data.reset_index()
-
-
-print("================== Species counts =======================")
-print(data['species'].value_counts())
-print("="*60)
-# ------------------------------------------------------
+    def fit(self, df, y=None):
+        return self
 
 
+    def update_df(self, df, ar, sp):
+        size = abs((ar[0] - ar[-2]) * (ar[-1] - ar[1]))
+        num = (size / DENSITY_UNIT) * self.density_
+        lats = np.random.uniform(ar[0], ar[2], num)
+        lons = np.random.uniform(ar[1], ar[-1], num)
+        res = pd.concat([df, pd.DataFrame({'species': [sp] * len(lats),
+                                            'latitude': lats,
+                                            'longitude': lons,
+                                            'absence': [True] * len(lats)})
+        return res
 
+    def transform(self, df, y=None):
+        res = df
+        for sp in df.species.unique:
+            if sp in data:
+                for ar in data[sp]:
+                    res = self.update_df(res, ar, sp)
 
-
-
-
-
-
-
+        if 'all' in data:
+            for sp in df.species.unqique:
+                for ar in data['all']:
+                    res = self.update_df(res, ar, sp)
+        return res

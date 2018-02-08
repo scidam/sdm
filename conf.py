@@ -11,7 +11,7 @@ DATA_PATH = './geodata'
 COM_PREFIX = 'trim_wc2_30s_%s_'
 DATA_EXT = '.tif'
 
-
+DENSITY_UNIT = 0.1 # degrees,
 
 DATA_PREFIXES = ('tmin', 'tmax', 'tavg', 'prec')
 
