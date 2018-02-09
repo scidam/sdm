@@ -21,14 +21,10 @@ for pref in DATA_PREFIXES:
                           pref.upper() + str(k):  {'filename':  os.path.join(DATA_PATH, pref, COM_PREFIX % pref + '{:02d}'.format(k)) + DATA_EXT } for k in range(1, 13)
                           })
 
-BIO_PREFIX = COM_PREFIX % 'bio'
+BIO_PREFIX = 'trim_wc2_bio_30s_'
 DATA_PATTERNS.update({
-                       BIO_PREFIX + str(k):  {'filename':  os.path.join(DATA_PATH, 'bio', BIO_PREFIX + '{:02d}'.format(k)) + DATA_EXT } for k in range(1, 20)
+                       'BIO' + str(k):  {'filename':  os.path.join(DATA_PATH, 'bio', BIO_PREFIX + '{:02d}'.format(k)) + DATA_EXT } for k in range(1, 20)
                 })
-
-
-
-
 
 
 PREDICTOR_LOADERS = dict()

@@ -1,6 +1,8 @@
 #coding: utf-8
 
 import numpy as np
+import os
+from functools import lru_cache
 
 # This Cython utility module have been deprecated in flavour of numpy indexing
 #import pyximport; pyximport.install()
@@ -8,7 +10,7 @@ import numpy as np
 #                 reload_support=True)
 #from extractors import get_data_by_coordinate
 
-from conf import DATA_PATTERNS, PREDICTOR_LOADERS, LARGE_VALUE
+from .conf import DATA_PATTERNS, PREDICTOR_LOADERS, LARGE_VALUE
 from osgeo import gdal
 
 
@@ -155,7 +157,6 @@ def get_predictor_data(lats, lons, name='BIO1', sources = ('BIO1', )):
 
     if name not in PREDICTOR_LOADERS:
         raise BaseException("Couldn't find registered extractor function for this name")
-
 
     if PREDICTOR_LOADERS[name] in globals():
         return globals()[PREDICTOR_LOADERS[name]](lats, lons, name)

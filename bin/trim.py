@@ -8,8 +8,8 @@ except:
     from osgeo import gdal
 
 
-SOURCE_PATH = './sourcegeo/'
-OUTPUT_PATH = './geodata'
+SOURCE_PATH = '../sourcegeo/'
+OUTPUT_PATH = '../geodata'
 
 
 GEOTIFF_PATTERN = '.tif'
