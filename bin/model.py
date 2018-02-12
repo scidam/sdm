@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
 
 from sklearn.ensemble import ExtraTreesClassifier
-
+from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 
 from .absence import data as absence_data
@@ -159,5 +159,28 @@ class TreeFeatureImportance(PreprocessingMixin):
         print("Iterations finished.")
         self.feature_importances_ = np.mean(np.array(importances), axis=0).tolist()
         return df
+
+
+
+
+
+class RFECV_FeatureSelector(PreprocessingMixin):
+
+    def __init__(self, clfs=[('MaxEnt', LogisticRegression()),
+                             ], cv=StratifiedKFold(5),
+                 score_func='accuracy'):
+        self.clfs_ = clfs
+        self.score_func = score_func
+        self.cv_ = cv
+
+    def transform(self, df, y=None):
+        result = dict()
+        for name, clf in zip(clfs):
+            estimator = RFECV(clf, step=1, cv=self.cv_,
+                              njobs=3)
+
+
+
+
 
 
