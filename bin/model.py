@@ -16,6 +16,14 @@ import numpy as np
 from .loader import get_predictor_data
 
 
+class TweakedPipeline(Pipeline):
+
+    def __getattr__(self, name):
+        if name in ['coef_', 'feature_importances_']:
+            if hasattr(self.steps[-1][-1], name):
+                return getattr(self.steps[-1][-1], name, None)
+        raise AttributeError
+
 
 class PreprocessingMixin(BaseEstimator, TransformerMixin):
 
@@ -52,7 +60,7 @@ class PruneSuspiciousCoords(PreprocessingMixin):
         val = 10 ** self.digits_
         lats_ind = np.equal(np.mod(df.latitude.values * val, 1), 0)
         lons_ind = np.equal(np.mod(df.longitude.values * val, 1), 0)
-        return df.copy()[lats_ind * lons_ind]
+        return df.copy()[~(lats_ind * lons_ind)]
 
 
 class ExpertFeatureSelector(PreprocessingMixin):
@@ -115,7 +123,8 @@ class FillEnvironmentalData(PreprocessingMixin):
     def transform(self, df, y=None):
         df_ = df.copy()
         for var in self.variables_:
-            values = get_predictor_data(df_['latitude'].values, df_['longitude'].values, var)
+            values = get_predictor_data(tuple(df_['latitude'].values),
+                                        tuple(df_['longitude'].values), var)
             df_[var] = values
         return df_.dropna().reset_index(drop=True)
 

@@ -150,11 +150,13 @@ def get_IO(lats, lons, name):
     prec_cold = get_precipitation_kiras(lats, lons, 'PCKI0')
     return prec_warm / prec_cold
 
+@lru_cache(maxsize=200)
 def get_predictor_data(lats, lons, name='BIO1', sources = ('BIO1', )):
     '''
     Extract data for specified latitudes and longitudes;
     '''
-
+    lats = np.array(lats)
+    lons = np.array(lons)
     if name not in PREDICTOR_LOADERS:
         raise BaseException("Couldn't find registered extractor function for this name")
 
