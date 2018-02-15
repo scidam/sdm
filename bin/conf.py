@@ -1,8 +1,6 @@
 # coding: utf-8
-
-
 import os
-
+from itertools import product
 
 LARGE_VALUE = 10000.0
 
@@ -27,12 +25,47 @@ DATA_PATTERNS.update({
                 })
 
 
+# ------------- Data from the future --------------------
+FUTURE_POSTFIX = '.tif_tr.tif'
+FUTURE_PATH_PATTERN = './sourcegeo/future/%s/%s/%s/%s/'
+FUTURE_FILE_PATTERN = '%s%s%s%s%s' + FUTURE_POSTFIX
+FUTURE_VARS_MAPPING = {'pr':'PREC', 'bi': 'BIO',
+                       'tx':'TMAX', 'tn':'TMIN'}
+FUTURE_YEARS = ['50', '70']
+FUTURE_VARS = ['bi', 'tn', 'tx', 'pr']
+FUTURE_PATHS = ['26', '45', '85']
+FUTURE_MODELS = ['cc', 'mc']
+FUTURE_MONTHS = map(str, range(1, 13))
+for model, year, path, var, month  in product(FUTURE_MODELS,
+                                              FUTURE_YEARS,
+                                              FUTURE_PATHS,
+                                              FUTURE_VARS,
+                                              FUTURE_MONTHS):
+    path_pat = FUTURE_PATH_PATTERN % (model, path, year, var)
+    file_pat = FUTURE_FILE_PATTERN % (model, path, var, year, month)
+    DATA_PATTERNS.update({
+        FUTURE_VARS_MAPPING[var]+month+'_' + year + model + path: {'filename': os.path.join(path_pat, file_pat)}
+                         })
+    if var == 'bi':
+        for m in range(13, 20):
+            file_pat = FUTURE_FILE_PATTERN % (model, path, var, year, m)
+            DATA_PATTERNS.update({
+            FUTURE_VARS_MAPPING[var]+str(m) + '_' + year + model + path: {
+                'filename': os.path.join(path_pat, file_pat)}
+            })
+
+# -------------------------------------------------------
+
+
+
+# ------------ Present & future data predictors ------------------
+
 PREDICTOR_LOADERS = dict()
 PREDICTOR_LOADERS.update({'BIO' + str(k): 'get_bio_data' for k in range(1, 20)})
 PREDICTOR_LOADERS.update({'TMIN' + str(k): 'get_bio_data' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'PREC' + str(k): 'get_bio_data' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'TMAX' + str(k): 'get_bio_data' for k in range(1, 13)})
-PREDICTOR_LOADERS.update({'TAVG' + str(k): 'get_bio_data' for k in range(1, 13)})
+PREDICTOR_LOADERS.update({'TAVG' + str(k): 'get_avg_temperature' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'WKI' + str(k): 'get_kiras_indecies' for k in range(11)})
 PREDICTOR_LOADERS.update({'CKI' + str(k): 'get_kiras_indecies' for k in range(11)})
 PREDICTOR_LOADERS.update({'PWKI' + str(k): 'get_precipitation_kiras' for k in range(10)})
@@ -48,3 +81,9 @@ PREDICTOR_LOADERS.update({'IO': 'get_IO'})
 
 
 
+
+
+
+
+
+# -------------------------------------------------------

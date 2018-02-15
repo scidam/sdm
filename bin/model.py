@@ -14,7 +14,7 @@ from .conf import DENSITY_UNIT
 import pandas as pd
 import numpy as np
 from .loader import get_predictor_data
-
+from scipy.spatial.distance import cdist
 
 class TweakedPipeline(Pipeline):
 
@@ -83,6 +83,26 @@ class ExpertFeatureSelector(PreprocessingMixin):
         return df[filtered]
 
 
+class CorrelationPruner(PreprocessingMixin):
+    def __init__(self, threshold=0.9, variables=[]):
+        self.threshold_ = threshold
+        self.variables_ = variables
+
+    def transform(self, df, y=None):
+        corrmatrix = df.loc[:, self.variables_].corr()
+        res_vars = []
+        lost = set(self.variables_)
+        for var in self.variables_:
+            if var in lost:
+                res_vars.append(var)
+                lost = lost - set({var})
+            for toremove in lost:
+                if abs(corrmatrix.loc[var, toremove]) >= self.threshold_:
+                    lost = lost - set({toremove})
+        removed = list(set(self.variables_) - set(res_vars))
+        return df.copy().drop(removed, axis=1)
+
+
 class FillPseudoAbsenceData(PreprocessingMixin):
     def __init__(self, density=0.1):
         '''
@@ -115,18 +135,72 @@ class FillPseudoAbsenceData(PreprocessingMixin):
         return res
 
 
+class FillPseudoAbsenceByConditions(PreprocessingMixin):
+    def __init__(self, similarity=1, density=0.1, species=''):
+        self.similarity_ = similarity
+        self.density_ = float(density)
+        self.species_ = species
+
+    def transform(self, df, y=None):
+        sselect = SelectSpecies(self.species_)
+        df_ = sselect.fit_transform(df)
+        lat_min, lat_max =  min(df_.latitude), max(df_.latitude)
+        lon_min, lon_max = min(df_.longitude), max(df_.longitude)
+        size = (lat_max - lat_min) * (lon_max - lon_min)
+        num = int((size / DENSITY_UNIT) * self.density_)
+        lats_candidates = np.random.uniform(lat_min, lat_max, num)
+        lons_candidates = np.random.uniform(lon_min, lon_max, num)
+        variables = list(set(df_.columns.values) - set(['latitude','longitude',
+                                                  'species', 'absence']))
+        df_cand = pd.DataFrame({'latitude':lats_candidates, 'longitude': lons_candidates})
+        filler = FillEnvironmentalData(variables=variables)
+        data_candidates = filler.fit_transform(df_cand)
+        data_presence = df_.loc[:, variables].values
+        candidate_values = data_candidates.loc[:, variables].values
+        candidate_values /= np.std(candidate_values, axis=0)
+        data_presence /= np.std(data_presence, axis=0)
+        # print("Data cands:", candidate_values.shape)
+        # print("Data pres:", data_presence.shape)
+        # print("Data pres normed:", np.std(data_presence, axis=0))
+        res = cdist(candidate_values, data_presence)
+        # print("Mutual matrix size:", res.shape)
+        threshold = float(len(variables)) * self.similarity_
+        inds = np.all(res > threshold, axis=1)
+        # print("Len of inds:", len(inds))
+        # print("Len of lat cands:", len(data_candidates.latitude.values))
+        # print("Selected inds:", np.sum(inds))
+        # sdf
+        lats = data_candidates.latitude.values[inds]
+        lons = data_candidates.longitude.values[inds]
+        res = pd.concat([df, pd.DataFrame({'species': [self.species_] * len(lats),
+                                           'latitude': lats,
+                                           'longitude': lons,
+                                           'absence': [True] * len(lats)})])
+        return res.dropna().reset_index(drop=True)
+
 class FillEnvironmentalData(PreprocessingMixin):
 
-    def __init__(self, variables=None):
+    def __init__(self, variables=None, postfix=''):
         self.variables_ = variables
+        self.postfix_ = postfix
 
     def transform(self, df, y=None):
         df_ = df.copy()
         for var in self.variables_:
             values = get_predictor_data(tuple(df_['latitude'].values),
-                                        tuple(df_['longitude'].values), var)
+                                        tuple(df_['longitude'].values), var,
+                                        postfix=self.postfix_)
             df_[var] = values
         return df_.dropna().reset_index(drop=True)
+
+    def transform_nans(self, df, y=None):
+        df_ = df.copy()
+        for var in self.variables_:
+            values = get_predictor_data(tuple(df_['latitude'].values),
+                                        tuple(df_['longitude'].values), var,
+                                        postfix=self.postfix_)
+            df_[var] = values
+        return df_
 
 
 class SelectSpecies(PreprocessingMixin):
@@ -187,6 +261,8 @@ class RFECV_FeatureSelector(PreprocessingMixin):
         for name, clf in zip(clfs):
             estimator = RFECV(clf, step=1, cv=self.cv_,
                               njobs=3)
+
+
 
 
 

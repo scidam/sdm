@@ -8,7 +8,7 @@ except:
     from osgeo import gdal
 
 
-SOURCE_PATH = '../sourcegeo/'
+SOURCE_PATH = '../sourcegeo/future'
 OUTPUT_PATH = '../geodata'
 
 
@@ -32,7 +32,6 @@ def update_coord(c, res):
     return c - (_ - int(_)) * abs(res)
 
 for dir_, dirnames, filenames in os.walk(SOURCE_PATH, followlinks=True):
-    print(filenames)
     for filename in filenames:
         command = ['gdalwarp', '-te']
         if filename.endswith(GEOTIFF_PATTERN):
@@ -49,7 +48,8 @@ for dir_, dirnames, filenames in os.walk(SOURCE_PATH, followlinks=True):
                                                                lonmax])))
             del gfile
             command.extend(map(str, [lonmin,latmin,lonmax,latmax, geotiff]))
-            destination = os.path.join(OUTPUT_PATH, geotiff).replace(SOURCE_PATH, '').replace(FILEPAT, TRIMMED_PAT)
+            #destination = os.path.join(OUTPUT_PATH, geotiff).replace(SOURCE_PATH, '').replace(FILEPAT, TRIMMED_PAT)
+            destination = geotiff + '_tr.tif'
             if os.path.exists(destination):
                 try:
                     os.remove(destination)
