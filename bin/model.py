@@ -9,12 +9,15 @@ from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 
+
 from .absence import data as absence_data
 from .conf import DENSITY_UNIT
 import pandas as pd
 import numpy as np
 from .loader import get_predictor_data
 from scipy.spatial.distance import cdist
+import matplotlib.pyplot as plt
+from matplotlib import cm
 
 class TweakedPipeline(Pipeline):
 
@@ -136,16 +139,21 @@ class FillPseudoAbsenceData(PreprocessingMixin):
 
 
 class FillPseudoAbsenceByConditions(PreprocessingMixin):
-    def __init__(self, similarity=1, density=0.1, species=''):
+    def __init__(self, similarity=1, density=0.1, species='', area=None):
         self.similarity_ = similarity
         self.density_ = float(density)
         self.species_ = species
+        self.area_ = area
 
     def transform(self, df, y=None):
         sselect = SelectSpecies(self.species_)
         df_ = sselect.fit_transform(df)
-        lat_min, lat_max =  min(df_.latitude), max(df_.latitude)
-        lon_min, lon_max = min(df_.longitude), max(df_.longitude)
+        if self.area_ is not None:
+            lat_min, lat_max = self.area_[0][0], self.area_[1][0]
+            lon_min, lon_max = self.area_[0][1], self.area_[1][1]
+        else:
+            lat_min, lat_max =  min(df_.latitude), max(df_.latitude)
+            lon_min, lon_max = min(df_.longitude), max(df_.longitude)
         size = (lat_max - lat_min) * (lon_max - lon_min)
         num = int((size / DENSITY_UNIT) * self.density_)
         lats_candidates = np.random.uniform(lat_min, lat_max, num)
@@ -159,23 +167,14 @@ class FillPseudoAbsenceByConditions(PreprocessingMixin):
         candidate_values = data_candidates.loc[:, variables].values
         candidate_values /= np.std(candidate_values, axis=0)
         data_presence /= np.std(data_presence, axis=0)
-        # print("Data cands:", candidate_values.shape)
-        # print("Data pres:", data_presence.shape)
-        # print("Data pres normed:", np.std(data_presence, axis=0))
         res = cdist(candidate_values, data_presence)
-        # print("Mutual matrix size:", res.shape)
         threshold = float(len(variables)) * self.similarity_
         inds = np.all(res > threshold, axis=1)
-        # print("Len of inds:", len(inds))
-        # print("Len of lat cands:", len(data_candidates.latitude.values))
-        # print("Selected inds:", np.sum(inds))
-        # sdf
-        lats = data_candidates.latitude.values[inds]
-        lons = data_candidates.longitude.values[inds]
-        res = pd.concat([df, pd.DataFrame({'species': [self.species_] * len(lats),
-                                           'latitude': lats,
-                                           'longitude': lons,
-                                           'absence': [True] * len(lats)})])
+        data_candidates = data_candidates[inds]
+        data_candidates['absence'] = True
+        data_candidates['species'] = self.species_
+        print("The number of ps-absence by cond:", np.sum(inds))
+        res = pd.concat([df, data_candidates])
         return res.dropna().reset_index(drop=True)
 
 class FillEnvironmentalData(PreprocessingMixin):
@@ -263,9 +262,34 @@ class RFECV_FeatureSelector(PreprocessingMixin):
                               njobs=3)
 
 
+def plot_map(lat_range, lon_range, resultion, clf, optimal_vars, train_df=None,
+             name='', postfix=''):
+    LATS = np.linspace(*lat_range, resultion)
+    LONS = np.linspace(*lon_range, resultion)
+    LATS_GRID, LONS_GRID = np.meshgrid(LATS, LONS)
+    fill_env_data = FillEnvironmentalData(optimal_vars)
+    map_df = pd.DataFrame({'latitude': LATS_GRID.ravel(),
+                           'longitude': LONS_GRID.ravel()}
+                          )
+    filled_df = fill_env_data.transform_nans(map_df)
+    XMAP = filled_df.loc[:, optimal_vars].values
+    nan_mask = np.any(np.isnan(XMAP), axis=1)
+    predictions = np.zeros((len(nan_mask), 2)) * np.nan
+    predictions[~nan_mask, :] = clf.predict_proba(XMAP[~nan_mask,:])
+    presence_proba_current = predictions[:, 1]
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cf = ax.contourf(LONS_GRID, LATS_GRID,
+                 presence_proba_current.reshape(resultion, resultion),
+                cmap=cm.afmhot)
+    fig.colorbar(cf, orientation='vertical', ticks=np.linspace(0,1,20))
+    ax.set_title('%s:' % name + ('Present state' if not postfix else postfix[1:]))
+    if train_df is not None:
+        psedo_absence_lats = train_df[train_df.absence == True].latitude.values
+        pseudo_absence_lons = train_df[train_df.absence == True].longitude.values
+        presence_lats = train_df[train_df.absence == False].latitude.values
+        presence_lons = train_df[train_df.absence == False].longitude.values
+        #ax.plot(pseudo_absence_lons, psedo_absence_lats, 'r.')
+        ax.plot(presence_lons, presence_lats, 'rx')
 
-
-
-
-
-
+    return fig, ax, XMAP
