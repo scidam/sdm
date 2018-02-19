@@ -15,7 +15,7 @@ def get_data_by_coordinate_np(lats, lons, array, xmin, xres, ymax, yres):
     array[np.abs(array) > LARGE_VALUE] = np.nan
     return array
 
-@lru_cache(maxsize=200)
+@lru_cache(maxsize=30)
 def get_bio_data(lats, lons, name):
     if name not in DATA_PATTERNS:
         raise BaseException("Couldn't find the <%s> name in the declared datasets" % name)
@@ -35,10 +35,10 @@ def get_bio_data(lats, lons, name):
                                   np.array(lons, dtype=np.float64),
                                   np.array(array, dtype=np.float64),
                                   xmin, xres, ymax, yres)
-    if (('TMIN' in name) or ('TMAX' in name)) and ('_' in name):
-        return result / 10.0
-    else:
-        return result
+    #if (('TMIN' in name) or ('TMAX' in name)) and ('_' in name):
+    #    return result / 10.0
+    #else:
+    return result
 
 
 def get_avg_temperature(lats, lons, name, postfix=''):

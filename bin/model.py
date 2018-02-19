@@ -267,7 +267,7 @@ def plot_map(lat_range, lon_range, resultion, clf, optimal_vars, train_df=None,
     LATS = np.linspace(*lat_range, resultion)
     LONS = np.linspace(*lon_range, resultion)
     LATS_GRID, LONS_GRID = np.meshgrid(LATS, LONS)
-    fill_env_data = FillEnvironmentalData(optimal_vars)
+    fill_env_data = FillEnvironmentalData(optimal_vars, postfix)
     map_df = pd.DataFrame({'latitude': LATS_GRID.ravel(),
                            'longitude': LONS_GRID.ravel()}
                           )
@@ -280,8 +280,8 @@ def plot_map(lat_range, lon_range, resultion, clf, optimal_vars, train_df=None,
     fig = plt.figure()
     ax = fig.add_subplot(111)
     cf = ax.contourf(LONS_GRID, LATS_GRID,
-                 presence_proba_current.reshape(resultion, resultion),
-                cmap=cm.afmhot)
+                 presence_proba_current.reshape(resultion, resultion)
+                )
     fig.colorbar(cf, orientation='vertical', ticks=np.linspace(0,1,20))
     ax.set_title('%s:' % name + ('Present state' if not postfix else postfix[1:]))
     if train_df is not None:
@@ -289,7 +289,6 @@ def plot_map(lat_range, lon_range, resultion, clf, optimal_vars, train_df=None,
         pseudo_absence_lons = train_df[train_df.absence == True].longitude.values
         presence_lats = train_df[train_df.absence == False].latitude.values
         presence_lons = train_df[train_df.absence == False].longitude.values
-        #ax.plot(pseudo_absence_lons, psedo_absence_lats, 'r.')
+        ax.plot(pseudo_absence_lons, psedo_absence_lats, 'r.')
         ax.plot(presence_lons, presence_lats, 'rx')
-
     return fig, ax, XMAP

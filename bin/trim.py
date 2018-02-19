@@ -8,15 +8,15 @@ except:
     from osgeo import gdal
 
 
-SOURCE_PATH = '../sourcegeo/future'
-OUTPUT_PATH = '../geodata'
+SOURCE_PATH = '../sourcegeo/geodata1.4'
+OUTPUT_PATH = '../sourcegeo/geodata1.4'
 
 
-GEOTIFF_PATTERN = '.tif'
+GEOTIFF_PATTERN = '.bil'
 
 
-FILEPAT = 'wc2.0_'
-TRIMMED_PAT = 'trim_wc2_'
+FILEPAT = ''
+TRIMMED_PAT = 'trim_'
 
 
 # ------------ Crop settings  -------------
@@ -48,8 +48,8 @@ for dir_, dirnames, filenames in os.walk(SOURCE_PATH, followlinks=True):
                                                                lonmax])))
             del gfile
             command.extend(map(str, [lonmin,latmin,lonmax,latmax, geotiff]))
-            #destination = os.path.join(OUTPUT_PATH, geotiff).replace(SOURCE_PATH, '').replace(FILEPAT, TRIMMED_PAT)
-            destination = geotiff + '_tr.tif'
+            #destination = os.path.join(OUTPUT_PATH, geotiff[:-4] + '.tif').replace(SOURCE_PATH, '').replace(FILEPAT, TRIMMED_PAT)
+            destination = geotiff[:-4] + '.tif'
             if os.path.exists(destination):
                 try:
                     os.remove(destination)

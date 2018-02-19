@@ -2,11 +2,11 @@
 import os
 from itertools import product
 
-LARGE_VALUE = 10000.0
+LARGE_VALUE = 9000.0
 
-DATA_PATH = './geodata'
+DATA_PATH = './sourcegeo/geodata1.4/'
 
-COM_PREFIX = 'trim_wc2_30s_%s_'
+COM_PREFIX = '%s_' #'#'trim_wc2_30s_%s_'
 DATA_EXT = '.tif'
 
 DENSITY_UNIT = 0.1 # degrees,
@@ -16,12 +16,12 @@ DATA_PREFIXES = ('tmin', 'tmax', 'tavg', 'prec')
 DATA_PATTERNS = dict()
 for pref in DATA_PREFIXES:
     DATA_PATTERNS.update({
-                          pref.upper() + str(k):  {'filename':  os.path.join(DATA_PATH, pref, COM_PREFIX % pref + '{:02d}'.format(k)) + DATA_EXT } for k in range(1, 13)
+                          pref.upper() + str(k):  {'filename':  os.path.join(DATA_PATH, pref, COM_PREFIX % pref + '{:1d}'.format(k)) + DATA_EXT } for k in range(1, 13)
                           })
 
-BIO_PREFIX = 'trim_wc2_bio_30s_'
+BIO_PREFIX = 'bio_' #trim_wc2_bio_30s
 DATA_PATTERNS.update({
-                       'BIO' + str(k):  {'filename':  os.path.join(DATA_PATH, 'bio', BIO_PREFIX + '{:02d}'.format(k)) + DATA_EXT } for k in range(1, 20)
+                       'BIO' + str(k):  {'filename':  os.path.join(DATA_PATH, 'bio', BIO_PREFIX + '{:1d}'.format(k)) + DATA_EXT } for k in range(1, 20)
                 })
 
 
@@ -77,13 +77,5 @@ PREDICTOR_LOADERS.update({'TMINCM': 'get_EXTCM'})
 PREDICTOR_LOADERS.update({'TMAXCM': 'get_EXTCM'})
 PREDICTOR_LOADERS.update({'IT': 'get_IT'})
 PREDICTOR_LOADERS.update({'IO': 'get_IO'})
-
-
-
-
-
-
-
-
 
 # -------------------------------------------------------
