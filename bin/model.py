@@ -135,6 +135,7 @@ class FillPseudoAbsenceData(PreprocessingMixin):
         if 'all' in absence_data:
             for ar in absence_data['all']:
                 res = self.update_df(res, ar, sp)
+        res.absence = res.absence.astype(np.bool)
         return res
 
 
@@ -175,6 +176,7 @@ class FillPseudoAbsenceByConditions(PreprocessingMixin):
         data_candidates['species'] = self.species_
         print("The number of ps-absence by cond:", np.sum(inds))
         res = pd.concat([df, data_candidates])
+        res.absence = res.absence.astype(np.bool)
         return res.dropna().reset_index(drop=True)
 
 class FillEnvironmentalData(PreprocessingMixin):
@@ -262,28 +264,37 @@ class RFECV_FeatureSelector(PreprocessingMixin):
                               njobs=3)
 
 
-def plot_map(lat_range, lon_range, resultion, clf, optimal_vars, train_df=None,
+def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
              name='', postfix=''):
-    LATS = np.linspace(*lat_range, resultion)
-    LONS = np.linspace(*lon_range, resultion)
-    LATS_GRID, LONS_GRID = np.meshgrid(LATS, LONS)
-    fill_env_data = FillEnvironmentalData(optimal_vars, postfix)
-    map_df = pd.DataFrame({'latitude': LATS_GRID.ravel(),
-                           'longitude': LONS_GRID.ravel()}
-                          )
-    filled_df = fill_env_data.transform_nans(map_df)
-    XMAP = filled_df.loc[:, optimal_vars].values
-    nan_mask = np.any(np.isnan(XMAP), axis=1)
-    predictions = np.zeros((len(nan_mask), 2)) * np.nan
-    predictions[~nan_mask, :] = clf.predict_proba(XMAP[~nan_mask,:])
-    presence_proba_current = predictions[:, 1]
+    if resolution <= 1000:
+        LATS = np.linspace(*lat_range, resolution)
+        LONS = np.linspace(*lon_range, resolution)
+        LATS_GRID, LONS_GRID = np.meshgrid(LATS, LONS)
+        fill_env_data = FillEnvironmentalData(optimal_vars, postfix)
+        map_df = pd.DataFrame({'latitude': LATS_GRID.ravel(),
+                               'longitude': LONS_GRID.ravel()}
+                              )
+        filled_df = fill_env_data.transform_nans(map_df)
+        XMAP = filled_df.loc[:, optimal_vars].values
+        nan_mask = np.any(np.isnan(XMAP), axis=1)
+        predictions = np.zeros((len(nan_mask), 2)) * np.nan
+        predictions[~nan_mask, :] = clf.predict_proba(XMAP[~nan_mask,:])
+        presence_proba_current = predictions[:, 1]
+    else:
+        pass
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    cf = ax.contourf(LONS_GRID, LATS_GRID,
-                 presence_proba_current.reshape(resultion, resultion)
-                )
+#    cf = ax.contourf(LONS_GRID, LATS_GRID,
+ #               presence_proba_current.reshape(resolution, resolution),
+  #                   cmap='tab20c'
+   #             )
+    print("Here am I and happt!!!")
+    cf = ax.imshow(presence_proba_current.reshape(resolution, resolution).T,
+                   cmap='CMRmap', origin='lower',
+                   extent=list(lon_range) + list(lat_range))
     fig.colorbar(cf, orientation='vertical', ticks=np.linspace(0,1,20))
-    ax.set_title('%s:' % name + ('Present state' if not postfix else postfix[1:]))
+    ax.set_title('%s:' % name)
     if train_df is not None:
         psedo_absence_lats = train_df[train_df.absence == True].latitude.values
         pseudo_absence_lons = train_df[train_df.absence == True].longitude.values

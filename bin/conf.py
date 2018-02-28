@@ -11,7 +11,7 @@ DATA_EXT = '.tif'
 
 DENSITY_UNIT = 0.1 # degrees,
 
-DATA_PREFIXES = ('tmin', 'tmax', 'tavg', 'prec')
+DATA_PREFIXES = ('tmin', 'tmax', 'tavg', 'prec', 'wind')
 
 DATA_PATTERNS = dict()
 for pref in DATA_PREFIXES:
@@ -23,7 +23,6 @@ BIO_PREFIX = 'bio_' #trim_wc2_bio_30s
 DATA_PATTERNS.update({
                        'BIO' + str(k):  {'filename':  os.path.join(DATA_PATH, 'bio', BIO_PREFIX + '{:1d}'.format(k)) + DATA_EXT } for k in range(1, 20)
                 })
-
 
 # ------------- Data from the future --------------------
 FUTURE_POSTFIX = '.tif_tr.tif'
@@ -54,14 +53,53 @@ for model, year, path, var, month  in product(FUTURE_MODELS,
                 'filename': os.path.join(path_pat, file_pat)}
             })
 
+    # append wind feature
+    DATA_PATTERNS.update({
+        'WIND' + month + '_' + year + model + path: {
+            'filename': DATA_PATTERNS['WIND' + month]['filename']}
+    })
+
 # -------------------------------------------------------
 
 
+# ------------- Data from the past --------------------
+PAST_VARS_MAPPING = FUTURE_VARS_MAPPING
+PAST_POSTFIX = '_.tif'
+PAST_PATH_PATTERN = './sourcegeo/past/%s/%s/'
+PAST_FILE_PATTERN = '%s%s%s%s' + PAST_POSTFIX
 
-# ------------ Present & future data predictors ------------------
+PAST_PERIOD = ['lgm', 'mid']
+PAST_VARS = ['bi', 'tn', 'tx', 'pr']
+PAST_MODELS = ['cc', 'mc']
+PAST_MONTHS = map(str, range(1, 13))
+for model, period, var, month  in product(PAST_MODELS,
+                                          PAST_PERIOD,
+                                          PAST_VARS,
+                                          PAST_MONTHS):
+    path_pat = PAST_PATH_PATTERN % (model, period)
+    file_pat = PAST_FILE_PATTERN % (model, period, var, month)
+    DATA_PATTERNS.update({
+        PAST_VARS_MAPPING[var]+month+'_' + model + period: {'filename': os.path.join(path_pat, file_pat)}
+                         })
+    if var == 'bi':
+        for m in range(13, 20):
+            file_pat = PAST_FILE_PATTERN % (model, period, var, m)
+            DATA_PATTERNS.update({
+                PAST_VARS_MAPPING[var]+str(m) + '_' + model+period: {
+                'filename': os.path.join(path_pat, file_pat)}
+            })
+
+# ----------------------------------------------------
+
+
+
+
+
+# ------------ Present & future & past data predictors ------------------
 
 PREDICTOR_LOADERS = dict()
 PREDICTOR_LOADERS.update({'BIO' + str(k): 'get_bio_data' for k in range(1, 20)})
+PREDICTOR_LOADERS.update({'WIND' + str(k): 'get_bio_data' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'TMIN' + str(k): 'get_bio_data' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'PREC' + str(k): 'get_bio_data' for k in range(1, 13)})
 PREDICTOR_LOADERS.update({'TMAX' + str(k): 'get_bio_data' for k in range(1, 13)})

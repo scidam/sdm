@@ -8,11 +8,11 @@ except:
     from osgeo import gdal
 
 
-SOURCE_PATH = '../sourcegeo/geodata1.4'
-OUTPUT_PATH = '../sourcegeo/geodata1.4'
+SOURCE_PATH = '../sourcegeo/past_'
+OUTPUT_PATH = '../sourcegeo/past_'
 
 
-GEOTIFF_PATTERN = '.bil'
+GEOTIFF_PATTERN = '.tif'
 
 
 FILEPAT = ''
@@ -49,12 +49,12 @@ for dir_, dirnames, filenames in os.walk(SOURCE_PATH, followlinks=True):
             del gfile
             command.extend(map(str, [lonmin,latmin,lonmax,latmax, geotiff]))
             #destination = os.path.join(OUTPUT_PATH, geotiff[:-4] + '.tif').replace(SOURCE_PATH, '').replace(FILEPAT, TRIMMED_PAT)
-            destination = geotiff[:-4] + '.tif'
-            if os.path.exists(destination):
-                try:
-                    os.remove(destination)
-                except:
-                    pass
+            destination = geotiff[:-4]+'_' + '.tif'
+            #if os.path.exists(destination):
+                #try:
+                   # os.remove(destination)
+                #except:
+                 #   pass
             command.append(destination)
             print("Executing the command: ", ' '.join(command), '\n')
             p = subprocess.Popen(command)

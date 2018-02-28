@@ -38,6 +38,9 @@ Refs
    Novel Three-Step Pseudo-Absence Selection Technique for Improved Species Distribution Modelling//PLOS ONE,
    August 13, 2013. https://doi.org/10.1371/journal.pone.0071218
 
+* doi: 10.1111/j.2041-210X.2011.00172.x
+
+* https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4018261/
 
 
 Model construction

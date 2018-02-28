@@ -1,22 +1,29 @@
 from .loader import get_predictor_data, get_kiras_indecies
 import numpy as np
-from pylab import *
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
 
 
-NAME='TMAX3'
+NAME='TMIN6'
 RESOLUTION = 500
 lats, lons = np.meshgrid(np.linspace(25, 65, RESOLUTION),
                          np.linspace(100, 165, RESOLUTION))
 
 valuesf = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
-                             NAME, postfix='_70cc85')
+                             NAME, postfix='_cclgm')
 print("The number of negative occurences:", np.sum(valuesf<0.0))
 print("The number of nan-occurences: ", np.sum(np.isnan(valuesf)))
 
-figure()
-contourf(lons, lats, valuesf.reshape(RESOLUTION, RESOLUTION))
-colorbar()
-title(NAME + 'future')
+
+plt.figure()
+ax = plt.axes(projection=ccrs.PlateCarree())
+ax.coastlines()
+plt.contourf(lons, lats, valuesf.reshape(RESOLUTION, RESOLUTION),
+         transform=ccrs.PlateCarree()
+         )
+
+plt.colorbar()
+plt.title(NAME + 'past')
 
 
 values = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
@@ -24,10 +31,13 @@ values = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
 print("The number of negative occurences:", np.sum(values<0.0))
 print("The number of nan-occurences: ", np.sum(np.isnan(values)))
 
-figure()
-contourf(lons, lats, values.reshape(RESOLUTION, RESOLUTION))
-colorbar()
-title(NAME + ' present')
+plt.figure()
+ax = plt.axes(projection=ccrs.PlateCarree())
+ax.coastlines()
+plt.contourf(lons, lats, values.reshape(RESOLUTION, RESOLUTION),
+         transform=ccrs.PlateCarree())
+plt.colorbar()
+plt.title(NAME + ' present')
 
 
-show()
+plt.show()
