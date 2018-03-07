@@ -6,6 +6,45 @@ import re
 
 from .conf import DATA_PATTERNS, PREDICTOR_LOADERS, LARGE_VALUE
 from osgeo import gdal
+from osgeo import osr
+
+def array_to_raster(array, lats, lons,  fname):
+    """Array > Raster
+    Save a raster from a C order array.
+
+    :param array: ndarray
+    """
+    # You need to get those values like you did.
+    
+    SourceDS = gdal.Open(DATA_PATTERNS['BIO1']['filename'], gdal.GA_ReadOnly)
+    GeoT = SourceDS.GetGeoTransform()
+    Projection = osr.SpatialReference()
+    Projection.ImportFromWkt(SourceDS.GetProjectionRef())    
+
+    x_pixels, y_pixels = array.shape
+    PIXEL_SIZE = lats[1]-lats[0] 
+    x_min = np.min(lons)
+    y_max = np.max(lats)
+    wkt_projection = 'a projection in wkt that you got from other file'
+    driver = gdal.GetDriverByName('GTiff')
+    dataset = driver.Create(
+        fname,
+        x_pixels,
+        y_pixels,
+        1,
+        gdal.GDT_Float32)
+
+    dataset.SetGeoTransform((
+        x_min,    # 0
+        PIXEL_SIZE,  # 1
+        0,                      # 2
+        y_max,    # 3
+        0,                      # 4
+        -PIXEL_SIZE))  
+    dataset.SetProjection(Projection.ExportToWkt() )
+    dataset.GetRasterBand(1).WriteArray(array)
+    dataset.FlushCache()  # Write to disk.
+    return 0
 
 
 def get_data_by_coordinate_np(lats, lons, array, xmin, xres, ymax, yres):
@@ -15,7 +54,7 @@ def get_data_by_coordinate_np(lats, lons, array, xmin, xres, ymax, yres):
     array[np.abs(array) > LARGE_VALUE] = np.nan
     return array
 
-@lru_cache(maxsize=20)
+@lru_cache(maxsize=40)
 def get_bio_data(lats, lons, name):
     if name not in DATA_PATTERNS:
         raise BaseException("Couldn't find the <%s> name in the declared datasets" % name)

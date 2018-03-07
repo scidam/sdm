@@ -266,9 +266,8 @@ class RFECV_FeatureSelector(PreprocessingMixin):
 
 def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
              name='', postfix=''):
-    if resolution <= 1000:
-        LATS = np.linspace(*lat_range, resolution)
-        LONS = np.linspace(*lon_range, resolution)
+
+    def get_probabilities(LATS, LONS):
         LATS_GRID, LONS_GRID = np.meshgrid(LATS, LONS)
         fill_env_data = FillEnvironmentalData(optimal_vars, postfix)
         map_df = pd.DataFrame({'latitude': LATS_GRID.ravel(),
@@ -278,19 +277,37 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         XMAP = filled_df.loc[:, optimal_vars].values
         nan_mask = np.any(np.isnan(XMAP), axis=1)
         predictions = np.zeros((len(nan_mask), 2)) * np.nan
-        predictions[~nan_mask, :] = clf.predict_proba(XMAP[~nan_mask,:])
+        predictions[~nan_mask, :] = clf.predict_proba(XMAP[~nan_mask, :])
         presence_proba_current = predictions[:, 1]
-    else:
-        pass
+        return presence_proba_current.reshape(LATS_GRID.shape).T
 
+    LONS = np.linspace(*lon_range, resolution)
+    if resolution <= 1000:
+        LATS = np.linspace(*lat_range, resolution)
+        presence_proba_current = get_probabilities(LATS, LONS)
+    else:
+        split_k = 1
+        done = False
+        for k in range(2, 100):
+            for j in [0,1,-1,2,-2]:
+                r = resolution + j
+                if r % k == 0 and r / k * resolution <= 1.0e+6:
+                    split_k = k
+                    done = True
+                    break
+            if done: break
+
+        LATS = np.split(np.linspace(*lat_range, resolution), split_k)
+        result =[]
+
+        for ind, lats in enumerate(LATS):
+            print('Bands completed: %s' % (ind / float(len(LATS)),))
+            _ = get_probabilities(lats, LONS)
+            result.append(_)
+        presence_proba_current = np.vstack(result)
     fig = plt.figure()
     ax = fig.add_subplot(111)
-#    cf = ax.contourf(LONS_GRID, LATS_GRID,
- #               presence_proba_current.reshape(resolution, resolution),
-  #                   cmap='tab20c'
-   #             )
-    print("Here am I and happt!!!")
-    cf = ax.imshow(presence_proba_current.reshape(resolution, resolution).T,
+    cf = ax.imshow(presence_proba_current,
                    cmap='CMRmap', origin='lower',
                    extent=list(lon_range) + list(lat_range))
     fig.colorbar(cf, orientation='vertical', ticks=np.linspace(0,1,20))
@@ -302,4 +319,4 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         presence_lons = train_df[train_df.absence == False].longitude.values
         ax.plot(pseudo_absence_lons, psedo_absence_lats, 'r.')
         ax.plot(presence_lons, presence_lats, 'rx')
-    return fig, ax, XMAP
+    return fig, ax
