@@ -307,8 +307,10 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         presence_proba_current = np.vstack(result)
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    ccmap = plt.get_cmap('CMRmap')
+    ccmap.set_bad(color='#12680c')
     cf = ax.imshow(presence_proba_current,
-                   cmap='CMRmap', origin='lower',
+                   cmap=ccmap, origin='lower',
                    extent=list(lon_range) + list(lat_range))
     fig.colorbar(cf, orientation='vertical', ticks=np.linspace(0,1,20))
     ax.set_title('%s:' % name)

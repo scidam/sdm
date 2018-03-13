@@ -54,7 +54,7 @@ def get_data_by_coordinate_np(lats, lons, array, xmin, xres, ymax, yres):
     array[np.abs(array) > LARGE_VALUE] = np.nan
     return array
 
-@lru_cache(maxsize=40)
+@lru_cache(maxsize=20)
 def get_bio_data(lats, lons, name):
     if name not in DATA_PATTERNS:
         raise BaseException("Couldn't find the <%s> name in the declared datasets" % name)
