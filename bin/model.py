@@ -3,7 +3,6 @@
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
 
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.model_selection import StratifiedKFold
@@ -11,13 +10,17 @@ from sklearn.linear_model import LogisticRegression
 
 
 from .absence import data as absence_data
-from .conf import DENSITY_UNIT
+
 import pandas as pd
 import numpy as np
-from .loader import get_predictor_data
+from .loader import get_predictor_data, array_to_raster
 from scipy.spatial.distance import cdist
+from scipy.spatial import ConvexHull
+from scipy.cluster.hierarchy import linkage, cut_tree
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from tqdm import tqdm
+
 
 class TweakedPipeline(Pipeline):
 
@@ -36,17 +39,63 @@ class PreprocessingMixin(BaseEstimator, TransformerMixin):
     def transform(self, df, y=None):
         return df
 
+
+class SelectDataWithinArea(PreprocessingMixin):
+    '''
+    All outside the bounding box data is filtered out.
+
+    :param
+
+        bbox -- [latmin, lonmin, latmax, lonmax], i.e it is an array like object.
+    '''
+    def __init__(self, bbox=None):
+        self.bbox_ = bbox
+
+    def transform(self, df, y=None):
+        if self.bbox_ is None: return df
+        latmin, lonmin, latmax, lonmax = tuple(self.bbox_)
+        df_ = df.copy()
+        inds = (df_.latitude <= latmax) * (df_.latitude >= latmin) * \
+        (df_.longitude <= lonmax) * (df_.longitude >= lonmin)
+        return df_[inds].reset_index(drop=True)
+
+
 class DensityTweaker(PreprocessingMixin):
-    def __init__(self, density=10):
-        '''
-        Decrease density of the train dataset according to the provided density.
 
-        :param
-
-          density -- a float value, allowed density in a 0.1x0.1 (lat x lon, in degrees)
-                     square
-        '''
+    def __init__(self, density=0.1):
         self.density_ = density
+
+    def transform(self, df, y=None):
+        df_ = df.copy()
+        to_remove = []
+        for j in range(df_.shape[0]):
+            lost_df = df_.drop(to_remove)
+            lats = lost_df.latitude.values
+            lons = lost_df.longitude.values
+            ixes = lost_df.index.values
+            clat = df_.iloc[j].latitude
+            clon = df_.iloc[j].longitude
+            inds = (lats >= (clat - 0.5)) * (lats <= (clat + 0.5)) * \
+                   (lons >= (clon - 0.5)) * (lons <= (clon + 0.5))
+            if inds.sum() > self.density_:
+                print("Current point:", clat, clon, 'N=', inds.sum())
+                num_to_remove = int(inds.sum() - self.density_)
+                if num_to_remove:
+                    choiced = np.random.choice(ixes[inds],
+                                                   num_to_remove,
+                                                   replace=False)
+                    to_remove += list(choiced)
+#            print("Current to remove ix:", to_remove,
+#                  len(to_remove), len(np.unique(to_remove)))
+        if len(to_remove) == 0:
+            print("Nothing to remove; points density is good.")
+        else:
+            print("Points were removed, total: %s" % len(to_remove))
+        to_remove = list(set(to_remove))
+        print("REMOVED POINTS: for %s"  % df_.species[0])
+        for ind, row in df_.drop(to_remove).iterrows():
+            print('%s, %s' % (row.latitude, row.longitude))
+        return df_.drop(to_remove).reset_index(drop=True)
 
 
 class PruneSuspiciousCoords(PreprocessingMixin):
@@ -107,15 +156,16 @@ class CorrelationPruner(PreprocessingMixin):
 
 
 class FillPseudoAbsenceData(PreprocessingMixin):
-    def __init__(self, density=0.1):
+    def __init__(self, density=0.1, area=None):
         '''
         Fill data frame with pseudo-absence data
         '''
         self.density_ = float(density)
+        self.area_ = area
 
     def update_df(self, df, ar, sp):
         size = abs((ar[0] - ar[-2]) * (ar[-1] - ar[1]))
-        num = int((size / DENSITY_UNIT) * self.density_)
+        num = int(size * self.density_)
         lats = np.random.uniform(ar[0], ar[2], num)
         lons = np.random.uniform(ar[1], ar[-1], num)
         res = pd.concat([df, pd.DataFrame({'species': [sp] * len(lats),
@@ -127,14 +177,17 @@ class FillPseudoAbsenceData(PreprocessingMixin):
     def transform(self, df, y=None):
         res = df.copy()
         assert len(df.species.unique()) == 1, "DataFrame should contain only one species"
-        res['absence'] = False
         sp = df.species.unique()[-1]
-        if sp in absence_data:
-            for ar in absence_data[sp]:
-                res = self.update_df(res, ar, sp)
-        if 'all' in absence_data:
-            for ar in absence_data['all']:
-                res = self.update_df(res, ar, sp)
+        if self.area_ is None:
+            res['absence'] = False
+            if sp in absence_data:
+                for ar in absence_data[sp]:
+                    res = self.update_df(res, ar, sp)
+            if 'all' in absence_data:
+                for ar in absence_data['all']:
+                    res = self.update_df(res, ar, sp)
+        else:
+            res = self.update_df(res, self.area_, sp)
         res.absence = res.absence.astype(np.bool)
         return res
 
@@ -156,12 +209,12 @@ class FillPseudoAbsenceByConditions(PreprocessingMixin):
             lat_min, lat_max =  min(df_.latitude), max(df_.latitude)
             lon_min, lon_max = min(df_.longitude), max(df_.longitude)
         size = (lat_max - lat_min) * (lon_max - lon_min)
-        num = int((size / DENSITY_UNIT) * self.density_)
+        num = int(size * self.density_)
         lats_candidates = np.random.uniform(lat_min, lat_max, num)
         lons_candidates = np.random.uniform(lon_min, lon_max, num)
         variables = list(set(df_.columns.values) - set(['latitude','longitude',
                                                   'species', 'absence']))
-        df_cand = pd.DataFrame({'latitude':lats_candidates, 'longitude': lons_candidates})
+        df_cand = pd.DataFrame({'latitude': lats_candidates, 'longitude': lons_candidates})
         filler = FillEnvironmentalData(variables=variables)
         data_candidates = filler.fit_transform(df_cand)
         data_presence = df_.loc[:, variables].values
@@ -245,9 +298,6 @@ class TreeFeatureImportance(PreprocessingMixin):
         return df
 
 
-
-
-
 class RFECV_FeatureSelector(PreprocessingMixin):
 
     def __init__(self, clfs=[('MaxEnt', LogisticRegression()),
@@ -300,8 +350,7 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         LATS = np.split(np.linspace(*lat_range, resolution), split_k)
         result =[]
 
-        for ind, lats in enumerate(LATS):
-            print('Bands completed: %s' % (ind / float(len(LATS)),))
+        for ind, lats in tqdm(enumerate(LATS)):
             _ = get_probabilities(lats, LONS)
             result.append(_)
         presence_proba_current = np.vstack(result)
@@ -319,6 +368,8 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         pseudo_absence_lons = train_df[train_df.absence == True].longitude.values
         presence_lats = train_df[train_df.absence == False].latitude.values
         presence_lons = train_df[train_df.absence == False].longitude.values
-        ax.plot(pseudo_absence_lons, psedo_absence_lats, 'r.')
-        ax.plot(presence_lons, presence_lats, 'rx')
+        ax.plot(pseudo_absence_lons, psedo_absence_lats, 'rx', markersize=2)
+        ax.plot(presence_lons, presence_lats, 'r.', markersize=2)
+    array_to_raster(presence_proba_current[::-1], lat_range,
+                    lon_range, '%s' % '_'.join(name.split('_')[:-1])  + '.tiff')
     return fig, ax

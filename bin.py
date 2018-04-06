@@ -20,29 +20,39 @@ from sklearn.metrics import confusion_matrix
 from sklearn import cross_validation
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
-
+from tqdm import tqdm
 
 
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
 DATA_FILE_NAMES = ['all_species_final.csv',# all data files should be in the same format
-                   'new_species.csv'
+                   'new_species.csv',
+                   'Filipendula.csv',
+                   'Giant_herbs.csv',
+                   'Petasites.csv',
+                   'gbif_new.csv',
+                   'giant_herb_fulldata.csv',
+                   'Species_FINAL.csv'
                    ]
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
 CLIMATIC_MODELS = ['50cc26','50cc85','50cc45', '70cc26', '70cc85','70cc45']
-CLIMATIC_MODELS = CLIMATIC_MODELS + list(map(lambda x: x.replace('cc', 'mc'), CLIMATIC_MODELS))
-CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
-#CLIMATIC_MODELS = ['_cclgm']# '_ccmid']
-CLIMATIC_MODELS = []
+# CLIMATIC_MODELS = CLIMATIC_MODELS + list(map(lambda x: x.replace('cc', 'mc'), CLIMATIC_MODELS))
+# CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
+CLIMATIC_MODELS += ['_cclgm', '_ccmid']
 MODEL_SPECIES = [
-#                 'filipendula camtch',
-#                 'senecio cannabifolius',
-#                 'petasites amplus'
+              #'filipendula',
+               # 'senecio',
+              #'petasites',
+              'angelica',
+              'heracleum',
+              'reynoutria'
+
+#                 'giant'
                  #'quercus mongolica',
-                 'kalopanax septemlobus',
+                 #'kalopanax septemlobus',
                  #'quercus',
-               #  'quercus crispula',
+                 #'quercus crispula',
                  #'fraxinus mandshurica',
                  #'carpinus cordata',
                  #'juglans mandshurica',
@@ -55,7 +65,7 @@ MODEL_SPECIES = [
                 ] # all  species should be given in lowercase format
 
 # Initial set of variables (see conf.py: PREDICTOR_LOADERS parameter for details)
-VARIABLE_SET = ('WKI5', 'PCKI0','PWKI0', 'CKI5', 'IT', 'IC')
+VARIABLE_SET = ('WKI5', 'PCKI0','PWKI0', 'CKI5', 'IC')
 #VARIABLE_SET += tuple(['WIND' + str(k) for k in range(1, 13)])#
 #VARIABLE_SET = ('BIO1',)
 #VARIABLE_SET += tuple(['WKI' + str(k) for k in range(2, 7)])
@@ -72,9 +82,8 @@ CLASSIFIERS = [# ('tree', DecisionTreeClassifier(random_state=10)),
                 #('NB', GaussianNB()),
                 #('MaxEnt', LogisticRegression()),
                 ('RF_100', RandomForestClassifier(n_estimators=100, random_state=10)),
-                ('RF_50', RandomForestClassifier(n_estimators=50, random_state=10)),
-                ('ada', AdaBoostClassifier(DecisionTreeClassifier(max_depth=7),
-                                           n_estimators=200, random_state=10))
+              #  ('ada', AdaBoostClassifier(DecisionTreeClassifier(max_depth=7),
+              #                             n_estimators=200, random_state=10))
 
 
                 #('SVM', SVC(kernel='linear'))
@@ -110,51 +119,43 @@ print("Unique species: ", np.unique(original_presence_data.species))
 
 
 parameter_grid_search = [
-                {'ps_density': 2,
-                 'density': 0.1,
-                 'similarity': 0.1,
-                 },
-                {
-                'ps_density': 2,
-                 'density': 0.1,
-                 'similarity': 0.2,
-                },
-                {
-                'ps_density': 2,
-                 'density': 0.1,
-                 'similarity': 0.05,
-                },
                 {'ps_density': 4,
-                 'density': 0.1,
-                 'similarity': 0.1,
-                 },
-                {
-                'ps_density': 1,
-                 'density': 0.1,
-                 'similarity': 0.1,
-                },
-                {
-                'ps_density': 2,
-                 'density': 1,
-                 'similarity': 0.1,
-                },
+                 'density': 3,
+                 'similarity': 0.0,
+                             },
+                #{'ps_density': 4,
+                 #'density': 2,
+                 #'similarity': 0.0,
+                 #},
+                #{'ps_density': 4,
+                 #'density': 0.5,
+                 #'similarity': 0.0,
+                 #},
+                  #{'ps_density': 4,
+                   #'density': 4,
+                   #'similarity': 0.0,
+                   #},
                  ]
 
 for ind, grid in enumerate(parameter_grid_search):
     for species in MODEL_SPECIES:
-        print("Processing: sp=%s"%species)
+        print("Processing: sp = %s" % species)
         classifier_stats_acc, classifier_stats_auc = [], []
         model = Pipeline([('select_species', SelectSpecies(species)),
+                          ('select_within_area', SelectDataWithinArea(bbox=[22, 100, 65, 169])),
                           ('prune_suspicious', PruneSuspiciousCoords()),
+                          ('dtweak', DensityTweaker(density=40)),
                           ('ps_absence', FillPseudoAbsenceData(density=grid['ps_density'])),
+                          ('fill_absence', FillPseudoAbsenceData(density=grid['density'],
+                                                 area=[22, 100, 65, 169])),
                           ('fill_env', FillEnvironmentalData(VARIABLE_SET)),
-                          ('fill_by_cond',
-                           FillPseudoAbsenceByConditions(species=species,
-                                                         similarity=grid['similarity'],
-                                                         density=grid['density'], #0.1 for trees
-                                                         area=[(22, 100),
-                                                               (65, 169)])),
-                          ('exclude_by_corr', CorrelationPruner(threshold=0.95,
+                          # ('fill_by_cond',
+                          #  FillPseudoAbsenceByConditions(species=species,
+                          #                                similarity=grid['similarity'],
+                          #                                density=grid['density'], #0.1 for trees
+                          #                                area=[(22, 100),
+                          #                                      (65, 169)])),
+                          ('exclude_by_corr', CorrelationPruner(threshold=0.9999,
                                                                 variables=VARIABLE_SET))
                           ])
 
@@ -219,6 +220,8 @@ for ind, grid in enumerate(parameter_grid_search):
         # print(HTML('<h5> %s </h5>' % ("~" * 90,)))
         optimal_vars = current_variable_set
         X, y = aux_result[optimal_vars].values, np.array(list(map(int, ~aux_result.absence)))
+        print("The number of absence ponts: ", (y==0).sum())
+        print("The number of presence ponts: ", (y==1).sum())
         for name, clf in CLASSIFIERS:
             print("Using classifier: ", name)
             std_clf = TweakedPipeline([('scaler', StandardScaler()),
@@ -238,10 +241,10 @@ for ind, grid in enumerate(parameter_grid_search):
 
             std_clf.fit(X, y)
             fig1, ax = plot_map([22, 67], [100, 169], 5000, std_clf,
-                                optimal_vars, train_df=None,
-                                name=species, postfix='')
+                                optimal_vars, train_df=aux_result,
+                                name=species + '_' + str(ind), postfix='')
             ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-            ax.set_ylabel(';'.join(['%s=%s'%(key,val) for key,val in grid.iteritems()]))
+            ax.set_ylabel(';'.join(['%s=%s'%(key,val) for key,val in grid.items()]))
             fig1.set_size_inches(18.5, 10.5)
             fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '.png', dpi=600)
             plt.close(fig1)
@@ -250,7 +253,7 @@ for ind, grid in enumerate(parameter_grid_search):
                 print("CURRENT MODEL:", cm)
                 fig2, ax = plot_map([22, 67], [100, 169], 5000, std_clf,
                                 optimal_vars, train_df=None,
-                                name='_'.join([species, cm, name, 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
+                                name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
                                 postfix=cm)
                 ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
                 fig2.set_size_inches(18.5, 10.5)

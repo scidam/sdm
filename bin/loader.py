@@ -17,31 +17,29 @@ def array_to_raster(array, lats, lons,  fname):
     # You need to get those values like you did.
     
     SourceDS = gdal.Open(DATA_PATTERNS['BIO1']['filename'], gdal.GA_ReadOnly)
-    GeoT = SourceDS.GetGeoTransform()
     Projection = osr.SpatialReference()
     Projection.ImportFromWkt(SourceDS.GetProjectionRef())    
-
     x_pixels, y_pixels = array.shape
-    PIXEL_SIZE = lats[1]-lats[0] 
+    XPIXEL_SIZE = (lons[1] - lons[0]) / float(x_pixels)
+    YPIXEL_SIZE = (lats[1] - lats[0]) / float(y_pixels)
     x_min = np.min(lons)
     y_max = np.max(lats)
-    wkt_projection = 'a projection in wkt that you got from other file'
     driver = gdal.GetDriverByName('GTiff')
     dataset = driver.Create(
         fname,
-        x_pixels,
         y_pixels,
+        x_pixels,
         1,
         gdal.GDT_Float32)
 
     dataset.SetGeoTransform((
         x_min,    # 0
-        PIXEL_SIZE,  # 1
+        abs(XPIXEL_SIZE),  # 1
         0,                      # 2
         y_max,    # 3
         0,                      # 4
-        -PIXEL_SIZE))  
-    dataset.SetProjection(Projection.ExportToWkt() )
+        -abs(YPIXEL_SIZE)))
+    dataset.SetProjection(Projection.ExportToWkt())
     dataset.GetRasterBand(1).WriteArray(array)
     dataset.FlushCache()  # Write to disk.
     return 0
