@@ -70,7 +70,7 @@ PAST_FILE_PATTERN = '%s%s%s%s' + PAST_POSTFIX
 
 PAST_PERIOD = ['lgm', 'mid']
 PAST_VARS = ['bi', 'tn', 'tx', 'pr']
-PAST_MODELS = ['cc', 'mc']
+PAST_MODELS = ['cc', 'mc', 'mr', 'me']
 PAST_MONTHS = map(str, range(1, 13))
 for model, period, var, month  in product(PAST_MODELS,
                                           PAST_PERIOD,

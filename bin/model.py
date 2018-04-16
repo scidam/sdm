@@ -7,7 +7,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
-
+import pickle
+import collections
 
 from .absence import data as absence_data
 
@@ -316,7 +317,7 @@ class RFECV_FeatureSelector(PreprocessingMixin):
 
 def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
              name='', postfix=''):
-
+    # response = collections.defaultdict(list)
     def get_probabilities(LATS, LONS):
         LATS_GRID, LONS_GRID = np.meshgrid(LATS, LONS)
         fill_env_data = FillEnvironmentalData(optimal_vars, postfix)
@@ -329,6 +330,10 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         predictions = np.zeros((len(nan_mask), 2)) * np.nan
         predictions[~nan_mask, :] = clf.predict_proba(XMAP[~nan_mask, :])
         presence_proba_current = predictions[:, 1]
+        # if not postfix:
+        #     response['proba'].extend(predictions[~nan_mask, 1].tolist()[::4])
+        #     for var in optimal_vars:
+        #         response[var].extend(filled_df.loc[~nan_mask, var].values.tolist()[::4])
         return presence_proba_current.reshape(LATS_GRID.shape).T
 
     LONS = np.linspace(*lon_range, resolution)
@@ -372,4 +377,8 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         ax.plot(presence_lons, presence_lats, 'r.', markersize=2)
     array_to_raster(presence_proba_current[::-1], lat_range,
                     lon_range, '%s' % '_'.join(name.split('_')[:-1])  + '.tiff')
+    # if not postfix:
+    #     datname = '%s' % '_'.join(name.split('_')[:-1])  + '.dat'
+    #     with open(datname, 'wb') as f:
+    #         pickle.dump(response, f)
     return fig, ax
