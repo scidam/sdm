@@ -269,6 +269,22 @@ class SelectSpecies(PreprocessingMixin):
         df_.species = self.species_
         return df_.reset_index(drop=True)
 
+
+class SelectSpeciesList(PreprocessingMixin):
+    def __init__(self, splist, overwrite=False):
+        self.splist_ = splist
+        self.overwrite = overwrite
+
+    def transform(self, df, y=None):
+        df_ = pd.DataFrame()
+        for sp in self.splist_:
+            intermediate = df[df.species.str.contains(sp)]
+            if self.overwrite:
+                intermediate.species = sp
+            df_ = pd.concat([df_, intermediate])
+        return df_.reset_index(drop=True)
+
+
 class TreeFeatureImportance(PreprocessingMixin):
 
     def __init__(self, variables=[], iterations=10, nest=200, pabs_density=0.1):

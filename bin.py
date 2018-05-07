@@ -14,26 +14,34 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn import cross_validation
+from sklearn.manifold import MDS
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from scipy import ndimage
 from collections import defaultdict
+import matplotlib
 
+
+
+MAP_RESOLUTION = 5000 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
 DATA_FILE_NAMES = ['all_species_final.csv',# all data files should be in the same format
                    'new_species.csv',
                    'Filipendula.csv',
-                   'Giant_herbs.csv',
+                   #'Giant_herbs.csv',
                    'Petasites.csv',
                    'gbif_new.csv',
                    'giant_herb_fulldata.csv',
-                   'Species_FINAL.csv'
+                   'Species_FINAL.csv',
+                   'heracleum_addition.csv',
+                   'points_giant_herb.csv'
                    ]
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
@@ -44,11 +52,12 @@ CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
 CLIMATIC_MODELS += ['_cclgm', ]
 MODEL_SPECIES = [
               #'filipendula',
-               # 'senecio',
+              # 'senecio',
               #'petasites',
               #'angelica',
               #'heracleum',
-              'reynoutria'
+              #'reynoutria'
+              'giant'
 
 #                 'giant'
                  #'quercus mongolica',
@@ -122,13 +131,26 @@ print("Unique species: ", np.unique(original_presence_data.species))
 
 parameter_grid_search = [
                 {'ps_density': 4,
-                 'density': 3,
+                 'density': 4,
                  'similarity': 0.0,
+                 'ms':  ['giant',]
                              },
                 #{'ps_density': 4,
                  #'density': 2,
                  #'similarity': 0.0,
+                 #'ms':  ['reynoutria',]
                  #},
+                #{'ps_density': 4,
+                 #'density': 3,
+                 #'similarity': 0.0,
+                 #'ms':  ['petasites', 'heracleum', 'angelica']
+                 #},
+                #{'ps_density': 4,
+                 #'density': 4,
+                 #'similarity': 0.0,
+                 #'ms':  ['all',]
+                             #},
+                
                 #{'ps_density': 4,
                  #'density': 0.5,
                  #'similarity': 0.0,
@@ -140,7 +162,7 @@ parameter_grid_search = [
                  ]
 
 
-def make_response(edges, xdata,  ydata, sigma=4):
+def make_response(edges, xdata,  ydata, sigma=7):
     newx, newy = [], []
     xdata = np.array(xdata)
     ydata = np.array(ydata)
@@ -157,8 +179,101 @@ def make_response(edges, xdata,  ydata, sigma=4):
 
 
 
+##================= make  LDA - plot ====================
+
+#def add_convex_hull(ax, points, color='r', label=''):
+    #from scipy.spatial import ConvexHull
+    #from matplotlib.patches import Polygon
+    #hull = ConvexHull(points)
+    
+    #ax.plot(np.append(points[hull.vertices,0], points[hull.vertices[0],0]),
+            #np.append(points[hull.vertices,1],points[hull.vertices[0],1]), '%s--o'%color, lw=2, label=label)
+    
+
+#model = Pipeline([('select_species', SelectSpeciesList(MODEL_SPECIES, overwrite=True)),
+                  #('select_within_area', SelectDataWithinArea(bbox=[22, 100, 65, 169])),
+                  #('prune_suspicious', PruneSuspiciousCoords()),
+                  #('dtweak', DensityTweaker(density=40)),
+                  #('fill_env', FillEnvironmentalData(VARIABLE_SET)),
+                 #])
+
+#prj_clfs = ( # ('LDA',  LinearDiscriminantAnalysis(n_components=2)),
+             #('PCA',  PCA(n_components=2)),
+##             ('MDS',  MDS(n_components=2)),
+##             ('NMDS', MDS(n_components=2, metric=False))
+            #)
+            
+
+#labels = LabelEncoder()
+#aux_result = model.fit_transform(original_presence_data)
+
+#y = labels.fit_transform(aux_result.species.values)
+#matplotlib.rcParams.update({'legend.fontsize': 14, 'xtick.labelsize':16,
+                            #'ytick.labelsize': 16, 'font.size': 14,
+                            #'axes.linewidth': 2,
+                            #'xtick.major.width':1.5
+                            #})
+
+#for clf_name, clf in prj_clfs:
+    #proj = clf.fit_transform(StandardScaler().fit_transform(aux_result.loc[:, VARIABLE_SET]), y)
+    #fig = plt.figure()
+    #fig.set_size_inches(10.5, 10.5)
+    #ax = fig.add_subplot(111)
+
+    #if 'DS' not in clf_name:
+        ## creating arrows,
+        #unity_values = [1.5] * len(VARIABLE_SET)
+        #x0, y0 = clf.transform([StandardScaler().fit_transform(aux_result.loc[:, VARIABLE_SET]).mean(axis=0)])[0]
+
+        #for key, u in zip(VARIABLE_SET, unity_values):
+            #x1, y1 = clf.transform([((np.array(VARIABLE_SET) == key).astype(int)*u).tolist()])[0]
+            #if key == 'WKI5':
+                #angle = np.arcsin(y1 / np.sqrt(x1 * x1 + y1 * y1))
+                #rotmat = np.array([[np.cos(angle), np.sin(angle)],
+                                   #[-np.sin(angle), np.cos(angle)]])
+
+        #for key, u in zip(VARIABLE_SET, unity_values):
+            #x1, y1 = clf.transform([((np.array(VARIABLE_SET) == key).astype(int)*u).tolist()])[0]
+            #x1_, y1_ = (rotmat @ np.array([x1, y1]).T).T.tolist()
+            #ax.arrow(x0, y0, x1_, y1_, head_width=0.1, head_length=0.2, fc='k', ec='k')
+            #ax.text(x1_+0.1, y1_, key)
+
+    #for sp, m, i,c in zip(np.unique(y), ['o', 'v', 's', 'd', '^'], range(5), 'rbgkc'):
+        ##ax.scatter(proj[y==sp,0], proj[y==sp,1], marker=m, s=30, label=labels.inverse_transform(i),
+                ##facecolors='none', edgecolors=c)
+        #add_convex_hull(ax, (rotmat @ proj[y==sp,:].T).T, color=c, label=sp)
+
+    #ax.legend()
+    #ax.set_title(clf_name + 'with aligned components')
+    #ax.set_xlabel('PC1')
+    #ax.set_ylabel('PC2')
+    #fig.savefig(clf_name + '.png', dpi=300)
+    #plt.close(fig)
+    #gc.collect()
+    #print(clf.explained_variance_ratio_)
+    #tot = clf.explained_variance_[0]/clf.explained_variance_ratio_[0]
+    #print('Main axis1', np.var((rotmat @ proj[y==sp,:].T).T[:,0],ddof=1)/tot)
+    #print('Main axis2', np.var((rotmat @ proj[y==sp,:].T).T[:,1],ddof=1)/tot)
+
+## #=======================================================
+#sdjfkl
+
+# Make for all species.. 
+# original_presence_data = SelectSpeciesList(MODEL_SPECIES, overwrite=True).fit_transform(original_presence_data)
+# MODEL_SPECIES = ['all']
+# original_presence_data.species = 'all'
+
 
 for ind, grid in enumerate(parameter_grid_search):
+    #if grid['ms'][0] == 'all':
+        #original_presence_data = SelectSpeciesList(['filipendula',
+              ## 'senecio',
+              #'petasites',
+              #'angelica',
+              #'heracleum',
+              #'reynoutria'], overwrite=True).fit_transform(original_presence_data)
+        #original_presence_data.species = 'all'
+    #MODEL_SPECIES = grid['ms']
     for species in MODEL_SPECIES:
         print("Processing: sp = %s" % species)
         classifier_stats_acc, classifier_stats_auc = [], []
@@ -191,6 +306,7 @@ for ind, grid in enumerate(parameter_grid_search):
         X, y = aux_result[current_variable_set].values, list(
             map(int, ~aux_result.absence))
         print("Dataset is formed.")
+
         # for name, clf in CLASSIFIERS:
         #     std_clf = TweakedPipeline([('scaler', StandardScaler()),
         #                                ('classificator', clf)])
@@ -244,7 +360,7 @@ for ind, grid in enumerate(parameter_grid_search):
         print("The number of absence ponts: ", (y==0).sum())
         print("The number of presence ponts: ", (y==1).sum())
 
-        minmax_key = {var: (X[:, ind].min(), X[:, ind].max()) for ind, var in enumerate(optimal_vars)}
+        minmax_key = {var: (X[:, i].min(), X[:, i].max()) for i, var in enumerate(optimal_vars)}
         response = {var: [] for var in optimal_vars}
         response.update({'probs': []})
         for name, clf in CLASSIFIERS:
@@ -254,7 +370,7 @@ for ind, grid in enumerate(parameter_grid_search):
             cv_auc = cross_val_score(std_clf, X, y, cv=10, scoring='roc_auc')
             print("AUC:", cv_auc)
             cf_matrices = []
-            for train_index, test_index in StratifiedKFold(n_splits=10,
+            for train_index, test_index in StratifiedKFold(n_splits=20,
                                                            shuffle=True,
                                                            random_state=10).split(X, y):
                 X_train, X_test = X[train_index], X[test_index]
@@ -265,20 +381,26 @@ for ind, grid in enumerate(parameter_grid_search):
                 cf_matrices.append([cf_matrix_p[0][0], cf_matrix_p[1][1]])
 
                 # store data for response curve
-                probs = std_clf.predict_proba(X_test)
+                probs = std_clf.predict_proba(X_test[:100])
                 response['probs'].append(probs[:, 1].T.tolist())
-                for ind, var in enumerate(optimal_vars):
-                    response[var].append(X_test[:, ind].T.tolist())
+                for i, var in enumerate(optimal_vars):
+                    response[var].append(X_test[:100, i].T.tolist())
+
+            # save responses
+            #respname = '%s' % '_'.join([species, name, str(ind)]) + '.dat'
+            #with open(respname, 'wb') as f:
+                #pickle.dump([response, minmax_key], f)
+
 
             std_clf.fit(X, y)
-            fig1, ax = plot_map([22, 67], [100, 169], 500, std_clf,
+            fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
                                 optimal_vars, train_df=aux_result,
                                 name=species + '_' + str(ind), postfix='')
 
             ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
             ax.set_ylabel(';'.join(['%s=%s'%(key,val) for key,val in grid.items()]))
             fig1.set_size_inches(18.5, 10.5)
-            fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '.png', dpi=600)
+            fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '.png', dpi=300)
             plt.close(fig1)
             gc.collect()
 
@@ -294,23 +416,24 @@ for ind, grid in enumerate(parameter_grid_search):
                     resps.append(ydata)
                 resps = np.array(resps)
                 ydata_med = np.percentile(resps, 50, axis=0)
-                ydata_l = resps.min(axis=0)
-                ydata_u = resps.max(axis=0)
+                ydata_l = np.percentile(resps, 2.5, axis=0)
+                ydata_u = np.percentile(resps, 97.5, axis=0)
                 figr = plt.figure()
                 figr.set_size_inches(10, 10)
                 axr = figr.add_subplot(111)
-                axr.plot(xdata, ydata_med, '-r', xdata, ydata_l, '-b', xdata, ydata_u, '-b')
-                figr.savefig('_'.join([species,  name, 'reponse', key]) + '_' + str(ind)  + '.png', dpi=600)
+                axr.plot(xdata, ydata_med, '-r')
+                axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
+                figr.savefig('_'.join([species,  name, 'reponse', key]) + '_' + str(ind)  + '.png', dpi=300)
                 plt.close(figr)
 
             for cm in CLIMATIC_MODELS:
                 print("CURRENT MODEL:", cm)
-                fig2, ax = plot_map([22, 67], [100, 169], 500, std_clf,
+                fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
                                 optimal_vars, train_df=None,
                                 name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
                                 postfix=cm)
                 ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
                 fig2.set_size_inches(18.5, 10.5)
-                fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=600)
+                fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=300)
                 plt.close(fig2)
                 gc.collect()

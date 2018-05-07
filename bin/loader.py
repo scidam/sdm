@@ -92,9 +92,9 @@ def get_kiras_indecies(lats, lons, name, postfix=''):
     '''Retruns the Family of Kira's indecies.
     '''
     if 'WKI' in name:
-        t = float(name.replace('WKI', ''))
+        t = 10.0 * float(name.replace('WKI', ''))
     elif 'CKI' in name:
-        t = -float(name.replace('CKI', ''))
+        t = -10.0 * float(name.replace('CKI', '')) # needs to be checked for correctness !!!
     else:
         raise BaseException("Illegal name of Kira's index")
     result = np.zeros(np.shape(lats))
@@ -119,7 +119,6 @@ def get_kiras_indecies(lats, lons, name, postfix=''):
 def get_precipitation_kiras(lats, lons, name, postfix=''):
     '''Returns Kira's based indecies of precipitation amount
     '''
-
     if 'PWKI' in name:
         t = float(name.replace('PWKI', ''))
     elif 'PCKI' in name:
