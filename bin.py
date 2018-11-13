@@ -29,7 +29,7 @@ import matplotlib
 
 
 
-MAP_RESOLUTION = 5000 # 5000 is default
+MAP_RESOLUTION = 500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
 DATA_FILE_NAMES = ['all_species_final.csv',# all data files should be in the same format
@@ -51,12 +51,12 @@ CLIMATIC_MODELS = ['70cc26', '70cc85']
 CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
 CLIMATIC_MODELS += ['_cclgm', ]
 MODEL_SPECIES = [
-              #'filipendula',
-              # 'senecio',
-              #'petasites',
-              #'angelica',
-              #'heracleum',
-              #'reynoutria'
+           #   'filipendula',
+           #   'senecio',
+           #   'petasites',
+           #   'angelica',
+           #   'heracleum',
+           #   'reynoutria'
               'giant'
 
 #                 'giant'
@@ -133,23 +133,23 @@ parameter_grid_search = [
                 {'ps_density': 4,
                  'density': 4,
                  'similarity': 0.0,
-                 'ms':  ['giant',]
+                 'ms':  ['giant', 'filipendula']
                              },
-                #{'ps_density': 4,
-                 #'density': 2,
-                 #'similarity': 0.0,
-                 #'ms':  ['reynoutria',]
-                 #},
-                #{'ps_density': 4,
-                 #'density': 3,
-                 #'similarity': 0.0,
-                 #'ms':  ['petasites', 'heracleum', 'angelica']
-                 #},
-                #{'ps_density': 4,
-                 #'density': 4,
-                 #'similarity': 0.0,
-                 #'ms':  ['all',]
-                             #},
+                {'ps_density': 4,
+                 'density': 2,
+                 'similarity': 0.0,
+                 'ms':  ['reynoutria',]
+                 },
+                {'ps_density': 4,
+                 'density': 3,
+                 'similarity': 0.0,
+                 'ms':  ['petasites', 'heracleum', 'angelica']
+                 },
+                # {'ps_density': 4,
+                #  'density': 4,
+                #  'similarity': 0.0,
+                #  'ms':  ['all',]
+                #              },
                 
                 #{'ps_density': 4,
                  #'density': 0.5,
@@ -265,15 +265,15 @@ def make_response(edges, xdata,  ydata, sigma=7):
 
 
 for ind, grid in enumerate(parameter_grid_search):
-    #if grid['ms'][0] == 'all':
-        #original_presence_data = SelectSpeciesList(['filipendula',
-              ## 'senecio',
-              #'petasites',
-              #'angelica',
-              #'heracleum',
-              #'reynoutria'], overwrite=True).fit_transform(original_presence_data)
-        #original_presence_data.species = 'all'
-    #MODEL_SPECIES = grid['ms']
+    # if grid['ms'][0] == 'all':
+    #     original_presence_data = SelectSpeciesList(['filipendula',
+    #           # 'senecio',
+    #           'petasites',
+    #           'angelica',
+    #           'heracleum',
+    #           'reynoutria'], overwrite=True).fit_transform(original_presence_data)
+    #     original_presence_data.species = 'all'
+    MODEL_SPECIES = grid['ms']
     for species in MODEL_SPECIES:
         print("Processing: sp = %s" % species)
         classifier_stats_acc, classifier_stats_auc = [], []
@@ -370,6 +370,7 @@ for ind, grid in enumerate(parameter_grid_search):
             cv_auc = cross_val_score(std_clf, X, y, cv=10, scoring='roc_auc')
             print("AUC:", cv_auc)
             cf_matrices = []
+            femp = []
             for train_index, test_index in StratifiedKFold(n_splits=20,
                                                            shuffle=True,
                                                            random_state=10).split(X, y):
@@ -380,60 +381,67 @@ for ind, grid in enumerate(parameter_grid_search):
                 cf_matrix_p = (cf_matrix.T / np.sum(cf_matrix, axis=1)).T
                 cf_matrices.append([cf_matrix_p[0][0], cf_matrix_p[1][1]])
 
+                femp.append(list(std_clf.feature_importances_))
+
+
                 # store data for response curve
                 probs = std_clf.predict_proba(X_test[:100])
                 response['probs'].append(probs[:, 1].T.tolist())
                 for i, var in enumerate(optimal_vars):
                     response[var].append(X_test[:100, i].T.tolist())
+            print("Features:", optimal_vars)
+            print('Feature importances:', np.array(femp).mean(axis=0), np.array(femp).std(axis=0), species)
+            print('Confusion matrices:', np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0))
 
             # save responses
             #respname = '%s' % '_'.join([species, name, str(ind)]) + '.dat'
             #with open(respname, 'wb') as f:
                 #pickle.dump([response, minmax_key], f)
-
-
+            #
+            #
             std_clf.fit(X, y)
             fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
                                 optimal_vars, train_df=aux_result,
                                 name=species + '_' + str(ind), postfix='')
-
+            
             ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
             ax.set_ylabel(';'.join(['%s=%s'%(key,val) for key,val in grid.items()]))
             fig1.set_size_inches(18.5, 10.5)
             fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '.png', dpi=300)
             plt.close(fig1)
             gc.collect()
+            #
+            # # plot response curves
+            # keys = list(response.keys())
+            # keys.remove('probs')
+            # for key in keys:
+            #     minx = minmax_key[key][0]
+            #     maxx = minmax_key[key][1]
+            #     resps = []
+            #     for a, b in zip(response[key], response['probs']):
+            #         xdata, ydata = make_response(np.linspace(minx, maxx, 100), a, b)
+            #         resps.append(ydata)
+            #     resps = np.array(resps)
+            #     ydata_med = np.percentile(resps, 50, axis=0)
+            #     ydata_l = np.percentile(resps, 2.5, axis=0)
+            #     ydata_u = np.percentile(resps, 97.5, axis=0)
+            #     figr = plt.figure()
+            #     figr.set_size_inches(10, 10)
+            #     axr = figr.add_subplot(111)
+            #     axr.plot(xdata, ydata_med, '-r')
+            #     axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
+            #     figr.savefig('_'.join([species,  name, 'reponse', key]) + '_' + str(ind)  + '.png', dpi=300)
+            #     plt.close(figr)
+            #
+            # for cm in CLIMATIC_MODELS:
+            #     print("CURRENT MODEL:", cm)
+            #     fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
+            #                     optimal_vars, train_df=None,
+            #                     name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
+            #                     postfix=cm)
+            #     ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
+            #     fig2.set_size_inches(18.5, 10.5)
+            #     fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=300)
+            #     plt.close(fig2)
+            #     gc.collect()
 
-            # plot response curves
-            keys = list(response.keys())
-            keys.remove('probs')
-            for key in keys:
-                minx = minmax_key[key][0]
-                maxx = minmax_key[key][1]
-                resps = []
-                for a, b in zip(response[key], response['probs']):
-                    xdata, ydata = make_response(np.linspace(minx, maxx, 100), a, b)
-                    resps.append(ydata)
-                resps = np.array(resps)
-                ydata_med = np.percentile(resps, 50, axis=0)
-                ydata_l = np.percentile(resps, 2.5, axis=0)
-                ydata_u = np.percentile(resps, 97.5, axis=0)
-                figr = plt.figure()
-                figr.set_size_inches(10, 10)
-                axr = figr.add_subplot(111)
-                axr.plot(xdata, ydata_med, '-r')
-                axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
-                figr.savefig('_'.join([species,  name, 'reponse', key]) + '_' + str(ind)  + '.png', dpi=300)
-                plt.close(figr)
-
-            for cm in CLIMATIC_MODELS:
-                print("CURRENT MODEL:", cm)
-                fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
-                                optimal_vars, train_df=None,
-                                name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
-                                postfix=cm)
-                ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-                fig2.set_size_inches(18.5, 10.5)
-                fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=300)
-                plt.close(fig2)
-                gc.collect()
