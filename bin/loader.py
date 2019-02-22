@@ -56,6 +56,7 @@ def get_data_by_coordinate_np(lats, lons, array, xmin, xres, ymax, yres):
 def get_bio_data(lats, lons, name):
     if name not in DATA_PATTERNS:
         raise BaseException("Couldn't find the <%s> name in the declared datasets" % name)
+    print("THE FILE: ", DATA_PATTERNS[name]['filename'])
     data = gdal.Open(DATA_PATTERNS[name]['filename'])
     geoinfo = data.GetGeoTransform()
     xmin = geoinfo[0]

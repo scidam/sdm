@@ -5,12 +5,12 @@ import cartopy.crs as ccrs
 
 
 NAME='WKI5'
-#RESOLUTION = 1000
-#lats, lons = np.meshgrid(np.linspace(25, 65, RESOLUTION),
-                         #np.linspace(100, 165, RESOLUTION))
+RESOLUTION = 1000
+lats, lons = np.meshgrid(np.linspace(25, 65, RESOLUTION),
+                         np.linspace(100, 165, RESOLUTION))
 
-#valuesf = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
-                             #NAME, postfix='')
+valuesf = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
+                             NAME, postfix='')
 #print("The number of negative occurences:", np.sum(valuesf<0.0))
 #print("The number of nan-occurences: ", np.sum(np.isnan(valuesf)))
 
@@ -18,22 +18,15 @@ NAME='WKI5'
 # VLADIVOSTOK
 
 
-names = ['TAVG%s'%k for k in range(1,13)]
+# names = ['TAVG%s' % k for k in range(1, 13)]
+
+# name='TAVG7'
+# for model in ['50cc26','50cc85','50cc45', '70cc26', '70cc85', '70cc45', 'cclgm', 'ccmid']:
+#         print(name, model, get_predictor_data((43.137299,), (131.946541,),
+#           name, postfix='_'+model))
 
 
-for model in ['50cc26','50cc85','50cc45', '70cc26', '70cc85','70cc45', 'cclgm', 'ccmid']:
-        name='TAVG7'
-        print(name, model, get_predictor_data((43.137299,), (131.946541,),
-          name, postfix='_'+model))
-
-
-print('WKI5=',  get_predictor_data((43.137299,), (131.946541,),
-          'WKI5', postfix=''))
-
-
-
-
-wef
+# wef
 
 
 plt.figure()
@@ -48,20 +41,20 @@ plt.title(NAME + 'past')
 
 plt.show()
 
-sdfsdf
+# sdfsdf
 
-values = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
-                            NAME, postfix='')
-print("The number of negative occurences:", np.sum(values<0.0))
-print("The number of nan-occurences: ", np.sum(np.isnan(values)))
+# values = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
+#                             NAME, postfix='')
+# print("The number of negative occurences:", np.sum(values<0.0))
+# print("The number of nan-occurences: ", np.sum(np.isnan(values)))
 
-plt.figure()
-ax = plt.axes(projection=ccrs.PlateCarree())
-ax.coastlines()
-plt.contourf(lons, lats, values.reshape(RESOLUTION, RESOLUTION),
-         transform=ccrs.PlateCarree())
-plt.colorbar()
-plt.title(NAME + ' present')
+# plt.figure()
+# ax = plt.axes(projection=ccrs.PlateCarree())
+# ax.coastlines()
+# plt.contourf(lons, lats, values.reshape(RESOLUTION, RESOLUTION),
+#          transform=ccrs.PlateCarree())
+# plt.colorbar()
+# plt.title(NAME + ' present')
 
 
-plt.show()
+# plt.show()

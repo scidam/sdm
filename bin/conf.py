@@ -4,7 +4,7 @@ from itertools import product
 
 LARGE_VALUE = 9000.0
 
-DATA_PATH = './sourcegeo/geodata1.4/'
+DATA_PATH = './wcdata/current/'
 
 COM_PREFIX = '%s_' #'#'trim_wc2_30s_%s_'
 DATA_EXT = '.tif'
@@ -15,8 +15,9 @@ DATA_PREFIXES = ('tmin', 'tmax', 'tavg', 'prec', 'wind')
 
 DATA_PATTERNS = dict()
 for pref in DATA_PREFIXES:
+    var = pref if pref!='tavg' else 'tmean'
     DATA_PATTERNS.update({
-                          pref.upper() + str(k):  {'filename':  os.path.join(DATA_PATH, pref, COM_PREFIX % pref + '{:1d}'.format(k)) + DATA_EXT } for k in range(1, 13)
+                          pref.upper() + str(k):  {'filename':  os.path.join(DATA_PATH, var, COM_PREFIX % var + '{:1d}'.format(k)) + DATA_EXT } for k in range(1, 13)
                           })
 
 BIO_PREFIX = 'bio_' #trim_wc2_bio_30s
@@ -25,22 +26,22 @@ DATA_PATTERNS.update({
                 })
 
 # ------------- Data from the future --------------------
-FUTURE_POSTFIX = '.tif_tr.tif'
-FUTURE_PATH_PATTERN = './sourcegeo/future/%s/%s/%s/%s/'
+FUTURE_POSTFIX = '.tif'
+FUTURE_PATH_PATTERN = './wcdata/future/%s/%s/%s/%s/'
 FUTURE_FILE_PATTERN = '%s%s%s%s%s' + FUTURE_POSTFIX
-FUTURE_VARS_MAPPING = {'pr':'PREC', 'bi': 'BIO',
-                       'tx':'TMAX', 'tn':'TMIN'}
+FUTURE_VARS_MAPPING = {'pr': 'PREC', 'bi': 'BIO',
+                       'tx': 'TMAX', 'tn': 'TMIN'}
 FUTURE_YEARS = ['50', '70']
 FUTURE_VARS = ['bi', 'tn', 'tx', 'pr']
 FUTURE_PATHS = ['26', '45', '85']
-FUTURE_MODELS = ['cc', 'mc']
+FUTURE_MODELS = ['cc', ]
 FUTURE_MONTHS = map(str, range(1, 13))
-for model, year, path, var, month  in product(FUTURE_MODELS,
-                                              FUTURE_YEARS,
-                                              FUTURE_PATHS,
-                                              FUTURE_VARS,
-                                              FUTURE_MONTHS):
-    path_pat = FUTURE_PATH_PATTERN % (model, path, year, var)
+for model, year, path, var, month in product(FUTURE_MODELS,
+                                             FUTURE_YEARS,
+                                             FUTURE_PATHS,
+                                             FUTURE_VARS,
+                                             FUTURE_MONTHS):
+    path_pat = FUTURE_PATH_PATTERN % (model, year, path, var)
     file_pat = FUTURE_FILE_PATTERN % (model, path, var, year, month)
     DATA_PATTERNS.update({
         FUTURE_VARS_MAPPING[var]+month+'_' + year + model + path: {'filename': os.path.join(path_pat, file_pat)}
@@ -49,9 +50,8 @@ for model, year, path, var, month  in product(FUTURE_MODELS,
         for m in range(13, 20):
             file_pat = FUTURE_FILE_PATTERN % (model, path, var, year, m)
             DATA_PATTERNS.update({
-            FUTURE_VARS_MAPPING[var]+str(m) + '_' + year + model + path: {
-                'filename': os.path.join(path_pat, file_pat)}
-            })
+                                  FUTURE_VARS_MAPPING[var]+str(m) + '_' + year + model + path: {'filename': os.path.join(path_pat, file_pat)}
+                                  })
 
     # append wind feature
     DATA_PATTERNS.update({
@@ -64,32 +64,32 @@ for model, year, path, var, month  in product(FUTURE_MODELS,
 
 # ------------- Data from the past --------------------
 PAST_VARS_MAPPING = FUTURE_VARS_MAPPING
-PAST_POSTFIX = '_.tif'
-PAST_PATH_PATTERN = './sourcegeo/past/%s/%s/'
+PAST_POSTFIX = '.tif'
+PAST_PATH_PATTERN = './wcdata/past/%s/%s/%s'
 PAST_FILE_PATTERN = '%s%s%s%s' + PAST_POSTFIX
 
 PAST_PERIOD = ['lgm', 'mid']
 PAST_VARS = ['bi', 'tn', 'tx', 'pr']
-PAST_MODELS = ['cc', 'mc', 'mr', 'me']
+PAST_MODELS = ['cc',]
 PAST_MONTHS = map(str, range(1, 13))
 for model, period, var, month  in product(PAST_MODELS,
                                           PAST_PERIOD,
                                           PAST_VARS,
                                           PAST_MONTHS):
-    path_pat = PAST_PATH_PATTERN % (model, period)
+    path_pat = PAST_PATH_PATTERN % (model, period, var)
     file_pat = PAST_FILE_PATTERN % (model, period, var, month)
     DATA_PATTERNS.update({
-        PAST_VARS_MAPPING[var]+month+'_' + model + period: {'filename': os.path.join(path_pat, file_pat)}
+        PAST_VARS_MAPPING[var] + month + '_' + model + period: {'filename': os.path.join(path_pat, file_pat)}
                          })
     if var == 'bi':
         for m in range(13, 20):
             file_pat = PAST_FILE_PATTERN % (model, period, var, m)
             DATA_PATTERNS.update({
-                PAST_VARS_MAPPING[var]+str(m) + '_' + model+period: {
+                PAST_VARS_MAPPING[var] + str(m) + '_' + model+period: {
                 'filename': os.path.join(path_pat, file_pat)}
             })
 
-# ----------------------------------------------------
+# ----------------------------------------------------------
 
 
 
@@ -116,4 +116,9 @@ PREDICTOR_LOADERS.update({'TMAXCM': 'get_EXTCM'})
 PREDICTOR_LOADERS.update({'IT': 'get_IT'})
 PREDICTOR_LOADERS.update({'IO': 'get_IO'})
 
+# -------------------------------------------------------
+# Print constructed patterns to stdout
+print("=" * 80)
+print(DATA_PATTERNS)
+print("=" * 80)
 # -------------------------------------------------------

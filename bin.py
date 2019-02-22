@@ -18,7 +18,6 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import confusion_matrix
-from sklearn import cross_validation
 from sklearn.manifold import MDS
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
@@ -32,16 +31,18 @@ import matplotlib
 MAP_RESOLUTION = 500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
-DATA_FILE_NAMES = ['all_species_final.csv',# all data files should be in the same format
-                   'new_species.csv',
-                   'Filipendula.csv',
+DATA_FILE_NAMES = ['Picea_jezoensis.csv',
+                   'Pinus_koraiensis.csv' 
+                   #'all_species_final.csv',# all data files should be in the same format
+                   #'new_species.csv',
+                   #'Filipendula.csv',
                    #'Giant_herbs.csv',
-                   'Petasites.csv',
-                   'gbif_new.csv',
-                   'giant_herb_fulldata.csv',
-                   'Species_FINAL.csv',
-                   'heracleum_addition.csv',
-                   'points_giant_herb.csv'
+                   #'Petasites.csv',
+                   #'gbif_new.csv',
+                   #'giant_herb_fulldata.csv',
+                   #'Species_FINAL.csv',
+                   #'heracleum_addition.csv',
+                   #'points_giant_herb.csv'
                    ]
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
@@ -57,7 +58,8 @@ MODEL_SPECIES = [
            #   'angelica',
            #   'heracleum',
            #   'reynoutria'
-              'giant'
+               'Picea jezoensis',
+               'Pinus koraiensis'
 
 #                 'giant'
                  #'quercus mongolica',
@@ -104,6 +106,7 @@ KFOLDS_NUMBER = 20
 PSEUDO_ABSENCE_DENSITY = 0.02
 
 original_presence_data = pd.DataFrame({col: [] for col in ALLOWED_COLUMNS}) #initialize dataframe-accumulator
+
 for filename in DATA_FILE_NAMES:
     try:
         # data loading procedure
@@ -410,38 +413,38 @@ for ind, grid in enumerate(parameter_grid_search):
             fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '.png', dpi=300)
             plt.close(fig1)
             gc.collect()
-            #
-            # # plot response curves
-            # keys = list(response.keys())
-            # keys.remove('probs')
-            # for key in keys:
-            #     minx = minmax_key[key][0]
-            #     maxx = minmax_key[key][1]
-            #     resps = []
-            #     for a, b in zip(response[key], response['probs']):
-            #         xdata, ydata = make_response(np.linspace(minx, maxx, 100), a, b)
-            #         resps.append(ydata)
-            #     resps = np.array(resps)
-            #     ydata_med = np.percentile(resps, 50, axis=0)
-            #     ydata_l = np.percentile(resps, 2.5, axis=0)
-            #     ydata_u = np.percentile(resps, 97.5, axis=0)
-            #     figr = plt.figure()
-            #     figr.set_size_inches(10, 10)
-            #     axr = figr.add_subplot(111)
-            #     axr.plot(xdata, ydata_med, '-r')
-            #     axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
-            #     figr.savefig('_'.join([species,  name, 'reponse', key]) + '_' + str(ind)  + '.png', dpi=300)
-            #     plt.close(figr)
-            #
-            # for cm in CLIMATIC_MODELS:
-            #     print("CURRENT MODEL:", cm)
-            #     fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
-            #                     optimal_vars, train_df=None,
-            #                     name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
-            #                     postfix=cm)
-            #     ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-            #     fig2.set_size_inches(18.5, 10.5)
-            #     fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=300)
-            #     plt.close(fig2)
-            #     gc.collect()
+
+            # plot response curves
+            keys = list(response.keys())
+            keys.remove('probs')
+            for key in keys:
+                minx = minmax_key[key][0]
+                maxx = minmax_key[key][1]
+                resps = []
+                for a, b in zip(response[key], response['probs']):
+                    xdata, ydata = make_response(np.linspace(minx, maxx, 100), a, b)
+                    resps.append(ydata)
+                resps = np.array(resps)
+                ydata_med = np.percentile(resps, 50, axis=0)
+                ydata_l = np.percentile(resps, 2.5, axis=0)
+                ydata_u = np.percentile(resps, 97.5, axis=0)
+                figr = plt.figure()
+                figr.set_size_inches(10, 10)
+                axr = figr.add_subplot(111)
+                axr.plot(xdata, ydata_med, '-r')
+                axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
+                figr.savefig('_'.join([species,  name, 'reponse', key]) + '_' + str(ind)  + '.png', dpi=300)
+                plt.close(figr)
+
+            for cm in CLIMATIC_MODELS:
+                print("CURRENT MODEL:", cm)
+                fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
+                                optimal_vars, train_df=None,
+                                name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
+                                postfix=cm)
+                ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
+                fig2.set_size_inches(18.5, 10.5)
+                fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=300)
+                plt.close(fig2)
+                gc.collect()
 
