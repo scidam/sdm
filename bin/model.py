@@ -21,6 +21,7 @@ from scipy.cluster.hierarchy import linkage, cut_tree
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from tqdm import tqdm
+import re
 
 
 class TweakedPipeline(Pipeline):
@@ -170,17 +171,20 @@ class FillPseudoAbsenceData(PreprocessingMixin):
         lats = np.random.uniform(ar[0], ar[2], num)
         lons = np.random.uniform(ar[1], ar[-1], num)
         res = pd.concat([df, pd.DataFrame({'species': [sp] * len(lats),
-                                            'latitude': lats,
-                                            'longitude': lons,
-                                            'absence': [True] * len(lats)})])
+                                           'latitude': lats,
+                                           'longitude': lons,
+                                           'absence': [True] * len(lats)})])
         return res
 
     def transform(self, df, y=None):
         res = df.copy()
-        assert len(df.species.unique()) == 1, "DataFrame should contain only one species"
+        assert len(df.species.unique()) == 1, "DataFrame should contain one species only"
         sp = df.species.unique()[-1]
+
+        if not hasattr(res, 'absence'):
+            res.loc[:, 'absence'] = False
+
         if self.area_ is None:
-            res['absence'] = False
             if sp in absence_data:
                 for ar in absence_data[sp]:
                     res = self.update_df(res, ar, sp)
@@ -264,8 +268,9 @@ class SelectSpecies(PreprocessingMixin):
         self.species_ = species
 
     def transform(self, df, y=None):
+        df.info()
         df_ = df.copy()
-        df_ = df_[df.species.str.contains(self.species_)]
+        df_ = df_[df.species.str.contains(self.species_, flags=re.IGNORECASE)]
         df_.species = self.species_
         return df_.reset_index(drop=True)
 

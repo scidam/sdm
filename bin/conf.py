@@ -118,7 +118,7 @@ PREDICTOR_LOADERS.update({'IO': 'get_IO'})
 
 # -------------------------------------------------------
 # Print constructed patterns to stdout
-print("=" * 80)
-print(DATA_PATTERNS)
-print("=" * 80)
+# print("=" * 80)
+# print(DATA_PATTERNS)
+# print("=" * 80)
 # -------------------------------------------------------
