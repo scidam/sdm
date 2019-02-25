@@ -136,11 +136,11 @@ for species in MODEL_SPECIES:
     classifier_stats_acc, classifier_stats_auc = [], []
     model = Pipeline([('select_species', SelectSpecies(species)),
                       ('select_within_area', SelectDataWithinArea(bbox=[22, 100, 65, 169])),
-                     # ('prune_suspicious', PruneSuspiciousCoords()),
-                      #('dtweak', DensityTweaker(density=40)),
+                      # ('prune_suspicious', PruneSuspiciousCoords()),
+                      # ('dtweak', DensityTweaker(density=40)),
                       ('fill_absence', FillPseudoAbsenceData(density=0.3, area=[22, 100, 65, 169])),
                       ('fill_env', FillEnvironmentalData(VARIABLE_SET)),
-                     # ('exclude_by_corr', CorrelationPruner(threshold=0.999, variables=VARIABLE_SET))
+                      # ('exclude_by_corr', CorrelationPruner(threshold=0.999, variables=VARIABLE_SET))
                       ])
 
     aux_result = model.fit_transform(original_presence_data)
@@ -197,9 +197,8 @@ for species in MODEL_SPECIES:
         fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
                             optimal_vars, train_df=aux_result,
                             name=species + '_' + str(ind), postfix='')
-        
+
         ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-        ax.set_ylabel(';'.join(['%s=%s'%(key,val) for key,val in grid.items()]))
         fig1.set_size_inches(18.5, 10.5)
         fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '.png', dpi=300)
         plt.close(fig1)
@@ -216,4 +215,3 @@ for species in MODEL_SPECIES:
             fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=300)
             plt.close(fig2)
             gc.collect()
-
