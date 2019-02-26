@@ -31,7 +31,7 @@ import matplotlib
 MAP_RESOLUTION = 500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
-DATA_FILE_NAMES = ['Picea_jezoensis.csv',
+DATA_FILE_NAMES = [#'Picea_jezoensis.csv',
                    'Pinus_koraiensis.csv' 
                    #'all_species_final.csv',# all data files should be in the same format
                    #'new_species.csv',
@@ -58,7 +58,7 @@ MODEL_SPECIES = [
            #   'angelica',
            #   'heracleum',
            #   'reynoutria'
-               'picea jezoensis',
+               #'picea jezoensis',
                'pinus koraiensis'
 
 #                 'giant'
