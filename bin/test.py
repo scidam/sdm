@@ -4,13 +4,16 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
 
-NAME='WKI5'
+NAME='IC'
 RESOLUTION = 1000
 lats, lons = np.meshgrid(np.linspace(25, 65, RESOLUTION),
                          np.linspace(100, 165, RESOLUTION))
 
 valuesf = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
-                             NAME, postfix='')
+                             NAME, postfix='_cclgm')
+
+values_current = get_predictor_data(tuple(lats.ravel()), tuple(lons.ravel()),
+                             NAME, postfix='')                             
 #print("The number of negative occurences:", np.sum(valuesf<0.0))
 #print("The number of nan-occurences: ", np.sum(np.isnan(valuesf)))
 
@@ -38,6 +41,19 @@ plt.contourf(lons, lats, valuesf.reshape(RESOLUTION, RESOLUTION),
 
 plt.colorbar()
 plt.title(NAME + 'past')
+
+
+plt.figure()
+ax = plt.axes(projection=ccrs.PlateCarree())
+ax.coastlines()
+plt.contourf(lons, lats, values_current.reshape(RESOLUTION, RESOLUTION),
+         transform=ccrs.PlateCarree()
+         )
+
+plt.colorbar()
+plt.title(NAME + 'current')
+
+
 
 plt.show()
 

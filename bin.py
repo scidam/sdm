@@ -47,10 +47,10 @@ DATA_FILE_NAMES = [#'Picea_jezoensis.csv',
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
 #CLIMATIC_MODELS = #['50cc26','50cc85','50cc45', '70cc26', '70cc85','70cc45']
-CLIMATIC_MODELS = ['70cc26', '70cc85']
+#CLIMATIC_MODELS = [] #['70cc26', '70cc85']
 # CLIMATIC_MODELS = CLIMATIC_MODELS + list(map(lambda x: x.replace('cc', 'mc'), CLIMATIC_MODELS))
-CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
-CLIMATIC_MODELS += ['_cclgm', ]
+# CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
+CLIMATIC_MODELS = ['_cclgm', ]
 MODEL_SPECIES = [
            #   'filipendula',
            #   'senecio',
@@ -78,7 +78,7 @@ MODEL_SPECIES = [
                 ] # all  species should be given in lowercase format
 
 # Initial set of variables (see conf.py: PREDICTOR_LOADERS parameter for details)
-VARIABLE_SET = ('WKI5', 'PCKI0','PWKI0', 'CKI5', 'IC')
+VARIABLE_SET = ('WKI5', 'PCKI0', 'PWKI0', 'CKI5', 'IC')
 #VARIABLE_SET += tuple(['WIND' + str(k) for k in range(1, 13)])#
 #VARIABLE_SET = ('BIO1',)
 #VARIABLE_SET += tuple(['WKI' + str(k) for k in range(2, 7)])
@@ -89,7 +89,7 @@ VARIABLE_SET = ('WKI5', 'PCKI0','PWKI0', 'CKI5', 'IC')
 #VARIABLE_SET += tuple(['TAVG' + str(k) for k in range(1, 13)])
 #VARIABLE_SET += tuple(['TMIN' + str(k) for k in range(1, 13)])
 #VARIABLE_SET += tuple(['TMAX' + str(k) for k in range(1, 13)])
-VARIABLE_SET = tuple(set(VARIABLE_SET)) # remove duplicate variables if they are exist
+VARIABLE_SET = tuple(set(VARIABLE_SET))  # remove duplicate variables if they are exist
 
 CLASSIFIERS = [# ('tree', DecisionTreeClassifier(random_state=10)),
                 #('NB', GaussianNB()),
@@ -130,88 +130,92 @@ original_presence_data['species'] = original_presence_data['species'].apply(str.
 original_presence_data = original_presence_data.dropna().drop_duplicates(ALLOWED_COLUMNS).reset_index(drop=True)
 print("Unique species: ", np.unique(original_presence_data.species))
 
-ind = 0
-for species in MODEL_SPECIES:
-    print("Processing: sp = {}".format(species))
-    classifier_stats_acc, classifier_stats_auc = [], []
-    model = Pipeline([('select_species', SelectSpecies(species)),
-                      ('select_within_area', SelectDataWithinArea(bbox=[22, 100, 65, 169])),
-                      # ('prune_suspicious', PruneSuspiciousCoords()),
-                      # ('dtweak', DensityTweaker(density=40)),
-                      ('fill_absence', FillPseudoAbsenceData(density=0.3, area=[22, 100, 65, 169])),
-                      ('fill_env', FillEnvironmentalData(VARIABLE_SET)),
-                      # ('exclude_by_corr', CorrelationPruner(threshold=0.999, variables=VARIABLE_SET))
-                      ])
 
-    aux_result = model.fit_transform(original_presence_data)
-    current_variable_set = set(VARIABLE_SET).intersection(
-        set(aux_result.columns.values))
-    print("Removed correlated features: ", set(VARIABLE_SET) - current_variable_set)
-    print("Leaved features: ", current_variable_set)
-    current_variable_set = list(current_variable_set)
-    X, y = aux_result[current_variable_set].values, list(
-        map(int, ~aux_result.absence))
-    print("Dataset is formed.")
+PSEUDO_DENSITIES = (0.3, 0.6, 0.9)
 
-    optimal_vars = current_variable_set
-    X, y = aux_result[optimal_vars].values, np.array(list(map(int, ~aux_result.absence)))
-    print("The number of absence ponts: ", (y==0).sum())
-    print("The number of presence ponts: ", (y==1).sum())
+for ps_density in PSEUDO_DENSITIES:
+    ind = 0
+    for species in MODEL_SPECIES:
+        print("Processing: sp = {}".format(species))
+        classifier_stats_acc, classifier_stats_auc = [], []
+        model = Pipeline([('select_species', SelectSpecies(species)),
+                        ('select_within_area', SelectDataWithinArea(bbox=[22, 100, 65, 169])),
+                        # ('prune_suspicious', PruneSuspiciousCoords()),
+                        # ('dtweak', DensityTweaker(density=40)),
+                        ('fill_absence', FillPseudoAbsenceData(density=ps_density, area=[22, 100, 65, 169])),
+                        ('fill_env', FillEnvironmentalData(VARIABLE_SET)),
+                        # ('exclude_by_corr', CorrelationPruner(threshold=0.999, variables=VARIABLE_SET))
+                        ])
 
-    minmax_key = {var: (X[:, i].min(), X[:, i].max()) for i, var in enumerate(optimal_vars)}
-    response = {var: [] for var in optimal_vars}
-    response.update({'probs': []})
-    for name, clf in CLASSIFIERS:
-        ind += 1
-        print("Using classifier: ", name)
-        std_clf = TweakedPipeline([('scaler', StandardScaler()),
-                                   ('classificator', clf)])
-        cv_auc = cross_val_score(std_clf, X, y, cv=10, scoring='roc_auc')
-        print("AUC:", cv_auc)
-        cf_matrices = []
-        femp = []
-        for train_index, test_index in StratifiedKFold(n_splits=20,
-                                                        shuffle=True,
-                                                        random_state=10).split(X, y):
-            X_train, X_test = X[train_index], X[test_index]
-            y_train, y_test = y[train_index], y[test_index]
-            std_clf.fit(X_train, y_train)
-            cf_matrix = confusion_matrix(y_test, std_clf.predict(X_test))
-            cf_matrix_p = (cf_matrix.T / np.sum(cf_matrix, axis=1)).T
-            cf_matrices.append([cf_matrix_p[0][0], cf_matrix_p[1][1]])
+        aux_result = model.fit_transform(original_presence_data)
+        current_variable_set = set(VARIABLE_SET).intersection(
+            set(aux_result.columns.values))
+        print("Removed correlated features: ", set(VARIABLE_SET) - current_variable_set)
+        print("Leaved features: ", current_variable_set)
+        current_variable_set = list(current_variable_set)
+        X, y = aux_result[current_variable_set].values, list(
+            map(int, ~aux_result.absence))
+        print("Dataset is formed.")
 
-            femp.append(list(std_clf.feature_importances_))
+        optimal_vars = current_variable_set
+        X, y = aux_result[optimal_vars].values, np.array(list(map(int, ~aux_result.absence)))
+        print("The number of absence ponts: ", (y==0).sum())
+        print("The number of presence ponts: ", (y==1).sum())
+
+        minmax_key = {var: (X[:, i].min(), X[:, i].max()) for i, var in enumerate(optimal_vars)}
+        response = {var: [] for var in optimal_vars}
+        response.update({'probs': []})
+        for name, clf in CLASSIFIERS:
+            ind += 1
+            print("Using classifier: ", name)
+            std_clf = TweakedPipeline([('scaler', StandardScaler()),
+                                    ('classificator', clf)])
+            cv_auc = cross_val_score(std_clf, X, y, cv=10, scoring='roc_auc')
+            print("AUC:", cv_auc)
+            cf_matrices = []
+            femp = []
+            for train_index, test_index in StratifiedKFold(n_splits=20,
+                                                            shuffle=True,
+                                                            random_state=10).split(X, y):
+                X_train, X_test = X[train_index], X[test_index]
+                y_train, y_test = y[train_index], y[test_index]
+                std_clf.fit(X_train, y_train)
+                cf_matrix = confusion_matrix(y_test, std_clf.predict(X_test))
+                cf_matrix_p = (cf_matrix.T / np.sum(cf_matrix, axis=1)).T
+                cf_matrices.append([cf_matrix_p[0][0], cf_matrix_p[1][1]])
+
+                femp.append(list(std_clf.feature_importances_))
 
 
-            # store data for response curve
-            probs = std_clf.predict_proba(X_test[:100])
-            response['probs'].append(probs[:, 1].T.tolist())
-            for i, var in enumerate(optimal_vars):
-                response[var].append(X_test[:100, i].T.tolist())
-        print("Features:", optimal_vars)
-        print('Feature importances:', np.array(femp).mean(axis=0), np.array(femp).std(axis=0), species)
-        print('Confusion matrices:', np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0))
+                # store data for response curve
+                probs = std_clf.predict_proba(X_test[:100])
+                response['probs'].append(probs[:, 1].T.tolist())
+                for i, var in enumerate(optimal_vars):
+                    response[var].append(X_test[:100, i].T.tolist())
+            print("Features:", optimal_vars)
+            print('Feature importances:', np.array(femp).mean(axis=0), np.array(femp).std(axis=0), species)
+            print('Confusion matrices:', np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0))
 
-        
-        std_clf.fit(X, y)
-        fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
-                            optimal_vars, train_df=aux_result,
-                            name=species + '_' + str(ind), postfix='')
+            
+            std_clf.fit(X, y)
+            fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
+                                optimal_vars, train_df=aux_result,
+                                name=species + '_' + str(ind) + '_' + str(ps_density), postfix='')
 
-        ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-        fig1.set_size_inches(18.5, 10.5)
-        fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '.png', dpi=300)
-        plt.close(fig1)
-        gc.collect()
-
-        for cm in CLIMATIC_MODELS:
-            print("CURRENT MODEL:", cm)
-            fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
-                            optimal_vars, train_df=None,
-                            name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc))]),
-                            postfix=cm)
             ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-            fig2.set_size_inches(18.5, 10.5)
-            fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '.png', dpi=300)
-            plt.close(fig2)
+            fig1.set_size_inches(18.5, 10.5)
+            fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '_' + str(ps_density) + '.png', dpi=300)
+            plt.close(fig1)
             gc.collect()
+
+            for cm in CLIMATIC_MODELS:
+                print("CURRENT MODEL:", cm)
+                fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
+                                optimal_vars, train_df=None,
+                                name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc)), str(ps_density)]),
+                                postfix=cm)
+                ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
+                fig2.set_size_inches(18.5, 10.5)
+                fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '_' + str(ps_density)+ '.png', dpi=300)
+                plt.close(fig2)
+                gc.collect()
