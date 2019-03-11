@@ -131,8 +131,24 @@ original_presence_data['species'] = original_presence_data['species'].apply(str.
 original_presence_data = original_presence_data.dropna().drop_duplicates(ALLOWED_COLUMNS).reset_index(drop=True)
 print("Unique species: ", np.unique(original_presence_data.species))
 
+def make_response(edges, xdata,  ydata, sigma=7):
+    newx, newy = [], []
+    xdata = np.array(xdata)
+    ydata = np.array(ydata)
+    for k in range(len(edges))[:-1]:
+        ids = (xdata > edges[k]) * (xdata <= edges[k + 1])
+        newx.append((edges[k] + edges[k + 1]) / 2.0)
+        if any(ids):
+            newy.append(ydata[ids].max())
+        else:
+            newy.append(0.0)
+    newx = ndimage.gaussian_filter1d(newx, sigma)
+    newy = ndimage.gaussian_filter1d(newy, sigma)
+    return newx, newy
+
 
 PSEUDO_DENSITIES = (0.3,0.6, 0.9)
+
 
 for ps_density in PSEUDO_DENSITIES:
     ind = 0
@@ -170,7 +186,7 @@ for ps_density in PSEUDO_DENSITIES:
             ind += 1
             print("Using classifier: ", name)
             std_clf = TweakedPipeline([('scaler', StandardScaler()),
-                                    ('classificator', clf)])
+                                       ('classificator', clf)])
             cv_auc = cross_val_score(std_clf, X, y, cv=10, scoring='roc_auc')
             print("AUC:", cv_auc)
             cf_matrices = []
@@ -192,29 +208,50 @@ for ps_density in PSEUDO_DENSITIES:
                 response['probs'].append(probs[:, 1].T.tolist())
                 for i, var in enumerate(optimal_vars):
                     response[var].append(X_test[:100, i].T.tolist())
+
             print("Features:", optimal_vars)
             print('Feature importances:', np.array(femp).mean(axis=0), np.array(femp).std(axis=0), species)
             print('Confusion matrices:', np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0))
 
-            std_clf.fit(X, y)
-            fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
-                                optimal_vars, train_df=aux_result,
-                                name=species + '_' + str(ind) + '_' + str(ps_density), postfix='')
+            keys = list(response.keys())
+            keys.remove('probs')
+            for key in keys:
+                minx = minmax_key[key][0]
+                maxx = minmax_key[key][1]
+                resps = []
+                for a, b in zip(response[key], response['probs']):
+                    xdata, ydata = make_response(np.linspace(minx, maxx, 100), a, b)
+                    resps.append(ydata)
+                resps = np.array(resps)
+                ydata_med = np.percentile(resps, 50, axis=0)
+                ydata_l = np.percentile(resps, 2.5, axis=0)
+                ydata_u = np.percentile(resps, 97.5, axis=0)
+                figr = plt.figure()
+                figr.set_size_inches(10, 10)
+                axr = figr.add_subplot(111)
+                axr.plot(xdata, ydata_med, '-r')
+                axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
+                figr.savefig('_'.join([species,  name, 'reponse', key, str(ps_density)]) + '_' + str(ind)  + '.png', dpi=300)
 
-            ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-            fig1.set_size_inches(18.5, 10.5)
-            fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '_' + str(ps_density) + '.png', dpi=300)
-            plt.close(fig1)
-            gc.collect()
-
-            for cm in CLIMATIC_MODELS:
-                print("CURRENT MODEL:", cm)
-                fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
-                                optimal_vars, train_df=None,
-                                name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc)), str(ps_density)]),
-                                postfix=cm)
-                ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
-                fig2.set_size_inches(18.5, 10.5)
-                fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '_' + str(ps_density)+ '.png', dpi=300)
-                plt.close(fig2)
-                gc.collect()
+#           std_clf.fit(X, y)
+#           fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
+#                               optimal_vars, train_df=aux_result,
+#                               name=species + '_' + str(ind) + '_' + str(ps_density), postfix='')
+#
+#           ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
+#           fig1.set_size_inches(18.5, 10.5)
+#           fig1.savefig('_'.join([species,  name]) + '_' + str(ind) + '_' + str(ps_density) + '.png', dpi=300)
+#           plt.close(fig1)
+#           gc.collect()
+#
+#           for cm in CLIMATIC_MODELS:
+#               print("CURRENT MODEL:", cm)
+#               fig2, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
+#                               optimal_vars, train_df=None,
+#                               name='_'.join([species, cm, name, str(ind), 'AUC=%0.2f +/- %0.2f' % (np.mean(cv_auc), np.std(cv_auc)), str(ps_density)]),
+#                               postfix=cm)
+#               ax.set_xlabel('CF_diag: %s +/- %s'%(np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0)))
+#               fig2.set_size_inches(18.5, 10.5)
+#               fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '_' + str(ps_density)+ '.png', dpi=300)
+#               plt.close(fig2)
+#               gc.collect()
