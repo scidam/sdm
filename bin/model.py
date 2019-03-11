@@ -396,12 +396,12 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         presence_lons = train_df[train_df.absence == False].longitude.values
         #ax.plot(pseudo_absence_lons, psedo_absence_lats, 'rx', markersize=2)
         ax.plot(presence_lons, presence_lats, 'r.', markersize=2)
-    
+
     # Save results to a tiff-file
-    #array_to_raster(presence_proba_current[::-1], lat_range,
-    #                lon_range, '%s' % '_'.join(name.split('_')[:-1])  + '.tiff')
-    
-    
+    filename = name.split('_')
+    filename = '_'.join(filter(lambda x: ' ' not in x, filename))
+    array_to_raster(presence_proba_current[::-1], lat_range, lon_range, '%s' % filename  + '.tiff')
+
     # if not postfix:
     #     datname = '%s' % '_'.join(name.split('_')[:-1])  + '.dat'
     #     with open(datname, 'wb') as f:

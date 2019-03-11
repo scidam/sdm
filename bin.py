@@ -32,7 +32,7 @@ MAP_RESOLUTION = 500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
 DATA_FILE_NAMES = [#'Picea_jezoensis.csv',
-                   'Pinus_koraiensis.csv' 
+                   'Pinus_koraiensis.csv'
                    #'all_species_final.csv',# all data files should be in the same format
                    #'new_species.csv',
                    #'Filipendula.csv',
@@ -46,11 +46,12 @@ DATA_FILE_NAMES = [#'Picea_jezoensis.csv',
                    ]
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
-#CLIMATIC_MODELS = #['50cc26','50cc85','50cc45', '70cc26', '70cc85','70cc45']
+#CLIMATIC_MODELS = ['70cc26', '70cc85', '70mr26', '70mr85']
 #CLIMATIC_MODELS = [] #['70cc26', '70cc85']
 # CLIMATIC_MODELS = CLIMATIC_MODELS + list(map(lambda x: x.replace('cc', 'mc'), CLIMATIC_MODELS))
-# CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
-CLIMATIC_MODELS = ['_cclgm', ]
+#CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
+#CLIMATIC_MODELS = ['_cclgm', '_mrlgm', '_ccmid', '_mrmid']
+CLIMATIC_MODELS = []
 MODEL_SPECIES = [
            #   'filipendula',
            #   'senecio',
@@ -131,7 +132,7 @@ original_presence_data = original_presence_data.dropna().drop_duplicates(ALLOWED
 print("Unique species: ", np.unique(original_presence_data.species))
 
 
-PSEUDO_DENSITIES = (0.3, 0.6, 0.9)
+PSEUDO_DENSITIES = (0.3,0.6, 0.9)
 
 for ps_density in PSEUDO_DENSITIES:
     ind = 0
@@ -157,7 +158,7 @@ for ps_density in PSEUDO_DENSITIES:
             map(int, ~aux_result.absence))
         print("Dataset is formed.")
 
-        optimal_vars = current_variable_set
+        optimal_vars = aux_result.loc[:, current_variable_set].columns.tolist()
         X, y = aux_result[optimal_vars].values, np.array(list(map(int, ~aux_result.absence)))
         print("The number of absence ponts: ", (y==0).sum())
         print("The number of presence ponts: ", (y==1).sum())
@@ -186,7 +187,6 @@ for ps_density in PSEUDO_DENSITIES:
 
                 femp.append(list(std_clf.feature_importances_))
 
-
                 # store data for response curve
                 probs = std_clf.predict_proba(X_test[:100])
                 response['probs'].append(probs[:, 1].T.tolist())
@@ -196,7 +196,6 @@ for ps_density in PSEUDO_DENSITIES:
             print('Feature importances:', np.array(femp).mean(axis=0), np.array(femp).std(axis=0), species)
             print('Confusion matrices:', np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0))
 
-            
             std_clf.fit(X, y)
             fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
                                 optimal_vars, train_df=aux_result,

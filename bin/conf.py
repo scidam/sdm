@@ -34,7 +34,7 @@ FUTURE_VARS_MAPPING = {'pr': 'PREC', 'bi': 'BIO',
 FUTURE_YEARS = ['50', '70']
 FUTURE_VARS = ['bi', 'tn', 'tx', 'pr']
 FUTURE_PATHS = ['26', '45', '85']
-FUTURE_MODELS = ['cc', ]
+FUTURE_MODELS = ['cc', 'mr']
 FUTURE_MONTHS = map(str, range(1, 13))
 for model, year, path, var, month in product(FUTURE_MODELS,
                                              FUTURE_YEARS,
@@ -70,7 +70,7 @@ PAST_FILE_PATTERN = '%s%s%s%s' + PAST_POSTFIX
 
 PAST_PERIOD = ['lgm', 'mid']
 PAST_VARS = ['bi', 'tn', 'tx', 'pr']
-PAST_MODELS = ['cc',]
+PAST_MODELS = ['cc', 'mr']
 PAST_MONTHS = map(str, range(1, 13))
 for model, period, var, month  in product(PAST_MODELS,
                                           PAST_PERIOD,
