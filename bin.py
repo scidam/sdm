@@ -26,6 +26,7 @@ from scipy import ndimage
 from collections import defaultdict
 import matplotlib
 
+plt.rcParams.update({'font.size': 20})
 
 
 MAP_RESOLUTION = 500 # 5000 is default
@@ -222,14 +223,16 @@ for ps_density in PSEUDO_DENSITIES:
                 for a, b in zip(response[key], response['probs']):
                     xdata, ydata = make_response(np.linspace(minx, maxx, 100), a, b)
                     resps.append(ydata)
+                if key in ['WKI5', 'CKI5', 'IC']:
+                    xdata /= 10.0
                 resps = np.array(resps)
                 ydata_med = np.percentile(resps, 50, axis=0)
                 ydata_l = np.percentile(resps, 2.5, axis=0)
                 ydata_u = np.percentile(resps, 97.5, axis=0)
                 figr = plt.figure()
-                figr.set_size_inches(10, 10)
+                figr.set_size_inches(15, 10)
                 axr = figr.add_subplot(111)
-                axr.plot(xdata, ydata_med, '-r')
+                axr.plot(xdata, ydata_med, '-r', linewidth=2)
                 axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
                 figr.savefig('_'.join([species,  name, 'reponse', key, str(ps_density)]) + '_' + str(ind)  + '.png', dpi=300)
 
