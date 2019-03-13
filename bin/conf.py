@@ -91,17 +91,14 @@ for model, period, var, month  in product(PAST_MODELS,
                 })
     else:
         # I completely forgot how to write translation!!!! This is terrible
-        path_pat = PAST_PATH_PATTERN % (model, var)
-        file_pat = PAST_FILE_PATTERN % (model, '_30s_', var, month)
-        DATA_PATTERNS.update()
+        path_pat = PAST_PATH_PATTERN % (model, var, '')
+        file_pat = PAST_FILE_PATTERN % (model, '_30s_', var, '_' + str(month))
+        DATA_PATTERNS.update({
+                    PAST_VARS_MAPPING[var] + str(m) + '_' + model: {
+                    'filename': os.path.join(path_pat, file_pat)}
+                })
 
-# ----------------------------------------------------------
-
-# ------------ Lig pattern ---------------------------------
-DATA_PATTERNS.update({'lig'})
-
-
-
+# -------------:qa----------------------------------------------------------
 
 
 # ------------ Present & future & past data predictors ------------------
@@ -128,6 +125,6 @@ PREDICTOR_LOADERS.update({'IO': 'get_IO'})
 # -------------------------------------------------------
 # Print constructed patterns to stdout
 # print("=" * 80)
-# print(DATA_PATTERNS)
+print(DATA_PATTERNS.keys())
 # print("=" * 80)
 # -------------------------------------------------------
