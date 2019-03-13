@@ -70,26 +70,35 @@ PAST_FILE_PATTERN = '%s%s%s%s' + PAST_POSTFIX
 
 PAST_PERIOD = ['lgm', 'mid']
 PAST_VARS = ['bi', 'tn', 'tx', 'pr']
-PAST_MODELS = ['cc', 'mr']
+PAST_MODELS = ['cc', 'mr', 'lig']
 PAST_MONTHS = map(str, range(1, 13))
 for model, period, var, month  in product(PAST_MODELS,
                                           PAST_PERIOD,
                                           PAST_VARS,
                                           PAST_MONTHS):
-    path_pat = PAST_PATH_PATTERN % (model, period, var)
-    file_pat = PAST_FILE_PATTERN % (model, period, var, month)
-    DATA_PATTERNS.update({
-        PAST_VARS_MAPPING[var] + month + '_' + model + period: {'filename': os.path.join(path_pat, file_pat)}
-                         })
-    if var == 'bi':
-        for m in range(13, 20):
-            file_pat = PAST_FILE_PATTERN % (model, period, var, m)
-            DATA_PATTERNS.update({
-                PAST_VARS_MAPPING[var] + str(m) + '_' + model+period: {
-                'filename': os.path.join(path_pat, file_pat)}
-            })
+    if model != 'lig':
+        path_pat = PAST_PATH_PATTERN % (model, period, var)
+        file_pat = PAST_FILE_PATTERN % (model, period, var, month)
+        DATA_PATTERNS.update({
+            PAST_VARS_MAPPING[var] + month + '_' + model + period: {'filename': os.path.join(path_pat, file_pat)}
+                            })
+        if var == 'bi':
+            for m in range(13, 20):
+                file_pat = PAST_FILE_PATTERN % (model, period, var, m)
+                DATA_PATTERNS.update({
+                    PAST_VARS_MAPPING[var] + str(m) + '_' + model+period: {
+                    'filename': os.path.join(path_pat, file_pat)}
+                })
+    else:
+        # I completely forgot how to write translation!!!! This is terrible
+        path_pat = PAST_PATH_PATTERN % (model, var)
+        file_pat = PAST_FILE_PATTERN % (model, '_30s_', var, month)
+        DATA_PATTERNS.update()
 
 # ----------------------------------------------------------
+
+# ------------ Lig pattern ---------------------------------
+DATA_PATTERNS.update({'lig'})
 
 
 
