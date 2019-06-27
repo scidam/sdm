@@ -1,0 +1,172 @@
+The file fagopyrum.csv succesfully loaded.
+==================================================
+The file glycine.csv succesfully loaded.
+==================================================
+The file oryza.csv succesfully loaded.
+==================================================
+The file triticum.csv succesfully loaded.
+==================================================
+The file zea.csv succesfully loaded.
+==================================================
+The file hemerocallis.csv succesfully loaded.
+==================================================
+Unique species:  ['fagopyrum esculentum' 'glycine max (l.) merr.'
+ 'glycine max subsp. formosana (hosok.) y.tateishi & h.ohashi'
+ 'glycine max subsp. formosana (l.) merr.' 'glycine max subsp. max'
+ 'glycine max subsp. soja (siebold & zucc.) h.ohashi' 'h. esculenta'
+ 'h. lilio-asphodelus' 'h. lilioasphodelus' 'h. middendorffii' 'h. minor'
+ 'oryza sativa' 'triticum aestivum l.' 'triticum aestivum subsp. aestivum'
+ 'triticum aestivum subsp. sphaerococcum (percival) mackey'
+ 'triticum dicoccon schrank' 'triticum durum desf.' 'triticum l.'
+ 'triticum spelta l.' 'triticum turgidum subsp. durum (desf.) husn.'
+ 'triticum turgidum subsp. turgidum' 'triticum vulgare l.'
+ 'triticum vulgare vill.' 'zea mays']
+Processing: sp = esculenta
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 3286 entries, 0 to 3285
+Data columns (total 3 columns):
+latitude     3286 non-null float64
+longitude    3286 non-null float64
+species      3286 non-null object
+dtypes: float64(2), object(1)
+memory usage: 77.1+ KB
+THE FILE:  ./wcdata/current/tmean/tmean_1.tif
+THE FILE:  ./wcdata/current/prec/prec_1.tif
+THE FILE:  ./wcdata/current/tmean/tmean_2.tif
+THE FILE:  ./wcdata/current/prec/prec_2.tif
+THE FILE:  ./wcdata/current/tmean/tmean_3.tif
+THE FILE:  ./wcdata/current/prec/prec_3.tif
+THE FILE:  ./wcdata/current/tmean/tmean_4.tif
+THE FILE:  ./wcdata/current/prec/prec_4.tif
+THE FILE:  ./wcdata/current/tmean/tmean_5.tif
+THE FILE:  ./wcdata/current/prec/prec_5.tif
+THE FILE:  ./wcdata/current/tmean/tmean_6.tif
+THE FILE:  ./wcdata/current/prec/prec_6.tif
+THE FILE:  ./wcdata/current/tmean/tmean_7.tif
+THE FILE:  ./wcdata/current/prec/prec_7.tif
+THE FILE:  ./wcdata/current/tmean/tmean_8.tif
+THE FILE:  ./wcdata/current/prec/prec_8.tif
+THE FILE:  ./wcdata/current/tmean/tmean_9.tif
+THE FILE:  ./wcdata/current/prec/prec_9.tif
+THE FILE:  ./wcdata/current/tmean/tmean_10.tif
+THE FILE:  ./wcdata/current/prec/prec_10.tif
+THE FILE:  ./wcdata/current/tmean/tmean_11.tif
+THE FILE:  ./wcdata/current/prec/prec_11.tif
+THE FILE:  ./wcdata/current/tmean/tmean_12.tif
+THE FILE:  ./wcdata/current/prec/prec_12.tif
+THE FILE:  ./wcdata/current/tmean/tmean_1.tif
+THE FILE:  ./wcdata/current/tmean/tmean_2.tif
+THE FILE:  ./wcdata/current/tmean/tmean_3.tif
+THE FILE:  ./wcdata/current/tmean/tmean_4.tif
+THE FILE:  ./wcdata/current/prec/prec_1.tif
+THE FILE:  ./wcdata/current/prec/prec_2.tif
+THE FILE:  ./wcdata/current/prec/prec_3.tif
+THE FILE:  ./wcdata/current/prec/prec_4.tif
+THE FILE:  ./wcdata/current/prec/prec_5.tif
+THE FILE:  ./wcdata/current/prec/prec_9.tif
+THE FILE:  ./wcdata/current/prec/prec_10.tif
+THE FILE:  ./wcdata/current/prec/prec_11.tif
+THE FILE:  ./wcdata/current/prec/prec_12.tif
+THE FILE:  ./wcdata/current/tmean/tmean_1.tif
+Removed correlated features:  set()
+Leaved features:  {'CKI5', 'IC', 'PCKI0', 'PWKI0', 'WKI5'}
+Dataset is formed.
+The number of absence ponts:  468
+The number of presence ponts:  29
+Using classifier:  RF_100
+AUC: [0.60283688 0.9787234  0.9858156  1.         0.97163121 1.
+ 1.         1.         0.89855072 0.70108696]
+Features: ['CKI5', 'IC', 'PCKI0', 'PWKI0', 'WKI5']
+Feature importances: [0.13600862 0.14169917 0.35179    0.14944487 0.22105734] [0.00906667 0.00910205 0.01231854 0.00763134 0.00772316] esculenta
+Confusion matrices: [0.99148551 0.725     ] [0.0170338  0.36996621]
+THE FILE:  ./wcdata/current/tmean/tmean_1.tif
+THE FILE:  ./wcdata/current/tmean/tmean_2.tif
+THE FILE:  ./wcdata/current/tmean/tmean_3.tif
+THE FILE:  ./wcdata/current/tmean/tmean_4.tif
+THE FILE:  ./wcdata/current/tmean/tmean_5.tif
+THE FILE:  ./wcdata/current/tmean/tmean_6.tif
+THE FILE:  ./wcdata/current/tmean/tmean_7.tif
+THE FILE:  ./wcdata/current/tmean/tmean_8.tif
+THE FILE:  ./wcdata/current/tmean/tmean_9.tif
+THE FILE:  ./wcdata/current/tmean/tmean_10.tif
+THE FILE:  ./wcdata/current/tmean/tmean_11.tif
+THE FILE:  ./wcdata/current/tmean/tmean_12.tif
+THE FILE:  ./wcdata/current/prec/prec_1.tif
+THE FILE:  ./wcdata/current/prec/prec_2.tif
+THE FILE:  ./wcdata/current/prec/prec_3.tif
+THE FILE:  ./wcdata/current/prec/prec_4.tif
+THE FILE:  ./wcdata/current/prec/prec_5.tif
+THE FILE:  ./wcdata/current/prec/prec_6.tif
+THE FILE:  ./wcdata/current/prec/prec_7.tif
+THE FILE:  ./wcdata/current/prec/prec_8.tif
+THE FILE:  ./wcdata/current/prec/prec_9.tif
+THE FILE:  ./wcdata/current/tmean/tmean_10.tif
+THE FILE:  ./wcdata/current/prec/prec_10.tif
+THE FILE:  ./wcdata/current/tmean/tmean_11.tif
+THE FILE:  ./wcdata/current/prec/prec_11.tif
+THE FILE:  ./wcdata/current/tmean/tmean_12.tif
+THE FILE:  ./wcdata/current/prec/prec_12.tif
+THE FILE:  ./wcdata/current/tmean/tmean_1.tif
+THE FILE:  ./wcdata/current/prec/prec_1.tif
+THE FILE:  ./wcdata/current/tmean/tmean_2.tif
+THE FILE:  ./wcdata/current/prec/prec_2.tif
+THE FILE:  ./wcdata/current/tmean/tmean_3.tif
+THE FILE:  ./wcdata/current/prec/prec_3.tif
+THE FILE:  ./wcdata/current/tmean/tmean_4.tif
+THE FILE:  ./wcdata/current/prec/prec_4.tif
+THE FILE:  ./wcdata/current/tmean/tmean_5.tif
+THE FILE:  ./wcdata/current/prec/prec_5.tif
+THE FILE:  ./wcdata/current/tmean/tmean_6.tif
+THE FILE:  ./wcdata/current/prec/prec_6.tif
+THE FILE:  ./wcdata/current/tmean/tmean_7.tif
+THE FILE:  ./wcdata/current/prec/prec_7.tif
+THE FILE:  ./wcdata/current/tmean/tmean_8.tif
+THE FILE:  ./wcdata/current/prec/prec_8.tif
+THE FILE:  ./wcdata/current/tmean/tmean_9.tif
+THE FILE:  ./wcdata/current/prec/prec_9.tif
+THE FILE:  ./wcdata/current/tmean/tmean_10.tif
+THE FILE:  ./wcdata/current/prec/prec_10.tif
+THE FILE:  ./wcdata/current/tmean/tmean_11.tif
+THE FILE:  ./wcdata/current/prec/prec_11.tif
+THE FILE:  ./wcdata/current/tmean/tmean_12.tif
+THE FILE:  ./wcdata/current/prec/prec_12.tif
+THE FILE:  ./wcdata/current/tmean/tmean_1.tif
+THE FILE:  ./wcdata/current/tmean/tmean_2.tif
+THE FILE:  ./wcdata/current/tmean/tmean_3.tif
+THE FILE:  ./wcdata/current/tmean/tmean_4.tif
+CURRENT MODEL: _70cc26
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn701.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx701.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn702.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx702.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn703.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx703.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn704.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx704.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn705.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx705.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn706.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx706.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn707.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx707.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn708.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx708.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn709.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx709.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn7010.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx7010.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn7011.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx7011.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn7012.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx7012.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn701.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx701.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn702.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx702.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn703.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx703.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn704.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx704.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn705.tif
+THE FILE:  ./wcdata/future/cc/70/26/tx/cc26tx705.tif
+THE FILE:  ./wcdata/future/cc/70/26/tn/cc26tn706.tif

@@ -26,14 +26,17 @@ from scipy import ndimage
 from collections import defaultdict
 import matplotlib
 
-plt.rcParams.update({'font.size': 20})
-
 
 MAP_RESOLUTION = 500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
 DATA_FILE_NAMES = [#'Picea_jezoensis.csv',
-                   'Pinus_koraiensis.csv'
+                   'fagopyrum.csv',
+                   'glycine.csv',
+                   'oryza.csv',
+                   'triticum.csv',
+                   'zea.csv',
+                   'hemerocallis.csv'
                    #'all_species_final.csv',# all data files should be in the same format
                    #'new_species.csv',
                    #'Filipendula.csv',
@@ -47,36 +50,21 @@ DATA_FILE_NAMES = [#'Picea_jezoensis.csv',
                    ]
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
-#CLIMATIC_MODELS = ['70cc26', '70cc85', '70mr26', '70mr85']
+CLIMATIC_MODELS = ['70cc26', '70cc85', 'lgm', 'mid']
 #CLIMATIC_MODELS = [] #['70cc26', '70cc85']
 # CLIMATIC_MODELS = CLIMATIC_MODELS + list(map(lambda x: x.replace('cc', 'mc'), CLIMATIC_MODELS))
-#CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
-#CLIMATIC_MODELS = ['_cclgm', '_mrlgm', '_ccmid', '_mrmid']
-CLIMATIC_MODELS = ['_lig']
-MODEL_SPECIES = [
-           #   'filipendula',
-           #   'senecio',
-           #   'petasites',
-           #   'angelica',
-           #   'heracleum',
-           #   'reynoutria'
-               #'picea jezoensis',
-               'pinus koraiensis'
+CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
+CLIMATIC_MODELS += ['_lig']
 
-#                 'giant'
-                 #'quercus mongolica',
-                 #'kalopanax septemlobus',
-                 #'quercus',
-                 #'quercus crispula',
-                 #'fraxinus mandshurica',
-                 #'carpinus cordata',
-                 #'juglans mandshurica',
-                 #'phellodendron amurense',
-                 #'ulmus davidiana',
-                 #'acer mono',
-                 #'ulmus laciniata',
-               #  'pinus koraiensis',
-                 #'tilia amurensis'
+MODEL_SPECIES = ['esculenta',
+                 'asphodelus',
+                 'middendorffii',
+                 'minor'
+                  #'fagopyrum',
+                 #'glycine',
+                 #'oryza',
+                 #'triticum',
+                 #'zea'
                 ] # all  species should be given in lowercase format
 
 # Initial set of variables (see conf.py: PREDICTOR_LOADERS parameter for details)
@@ -132,24 +120,8 @@ original_presence_data['species'] = original_presence_data['species'].apply(str.
 original_presence_data = original_presence_data.dropna().drop_duplicates(ALLOWED_COLUMNS).reset_index(drop=True)
 print("Unique species: ", np.unique(original_presence_data.species))
 
-def make_response(edges, xdata,  ydata, sigma=7):
-    newx, newy = [], []
-    xdata = np.array(xdata)
-    ydata = np.array(ydata)
-    for k in range(len(edges))[:-1]:
-        ids = (xdata > edges[k]) * (xdata <= edges[k + 1])
-        newx.append((edges[k] + edges[k + 1]) / 2.0)
-        if any(ids):
-            newy.append(ydata[ids].max())
-        else:
-            newy.append(0.0)
-    newx = ndimage.gaussian_filter1d(newx, sigma)
-    newy = ndimage.gaussian_filter1d(newy, sigma)
-    return newx, newy
 
-
-PSEUDO_DENSITIES = (0.3,0.6, 0.9)
-
+PSEUDO_DENSITIES = (0.3, 0.6, 0.9)
 
 for ps_density in PSEUDO_DENSITIES:
     ind = 0
@@ -187,7 +159,7 @@ for ps_density in PSEUDO_DENSITIES:
             ind += 1
             print("Using classifier: ", name)
             std_clf = TweakedPipeline([('scaler', StandardScaler()),
-                                       ('classificator', clf)])
+                                    ('classificator', clf)])
             cv_auc = cross_val_score(std_clf, X, y, cv=10, scoring='roc_auc')
             print("AUC:", cv_auc)
             cf_matrices = []
@@ -209,32 +181,9 @@ for ps_density in PSEUDO_DENSITIES:
                 response['probs'].append(probs[:, 1].T.tolist())
                 for i, var in enumerate(optimal_vars):
                     response[var].append(X_test[:100, i].T.tolist())
-
             print("Features:", optimal_vars)
             print('Feature importances:', np.array(femp).mean(axis=0), np.array(femp).std(axis=0), species)
             print('Confusion matrices:', np.mean(cf_matrices, axis=0), np.std(cf_matrices, axis=0))
-
-            keys = list(response.keys())
-            keys.remove('probs')
-            for key in keys:
-                minx = minmax_key[key][0]
-                maxx = minmax_key[key][1]
-                resps = []
-                for a, b in zip(response[key], response['probs']):
-                    xdata, ydata = make_response(np.linspace(minx, maxx, 100), a, b)
-                    resps.append(ydata)
-                if key in ['WKI5', 'CKI5', 'IC']:
-                    xdata /= 10.0
-                resps = np.array(resps)
-                ydata_med = np.percentile(resps, 50, axis=0)
-                ydata_l = np.percentile(resps, 2.5, axis=0)
-                ydata_u = np.percentile(resps, 97.5, axis=0)
-                figr = plt.figure()
-                figr.set_size_inches(15, 10)
-                axr = figr.add_subplot(111)
-                axr.plot(xdata, ydata_med, '-r', linewidth=2)
-                axr.fill_between(xdata, ydata_l, ydata_u, facecolor='gray', alpha=0.5)
-                figr.savefig('_'.join([species,  name, 'reponse', key, str(ps_density)]) + '_' + str(ind)  + '.png', dpi=300)
 
             std_clf.fit(X, y)
             fig1, ax = plot_map([22, 67], [100, 169], MAP_RESOLUTION, std_clf,
@@ -258,6 +207,3 @@ for ps_density in PSEUDO_DENSITIES:
                 fig2.savefig(cm + '_'.join([species, name]) + '_' + str(ind) + '_' + str(ps_density)+ '.png', dpi=300)
                 plt.close(fig2)
                 gc.collect()
-                
-                
-# sudo mount -t cifs "//192.168.1.11/exchange/Modeling/wcdata" ./wcdata -o username=dmitry,workgroup=123,ro,password=123,defaults                
