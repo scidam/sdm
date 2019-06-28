@@ -50,11 +50,12 @@ DATA_FILE_NAMES = [#'Picea_jezoensis.csv',
                    ]
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
-CLIMATIC_MODELS = ['70cc26', '70cc85', 'lgm', 'mid']
+CLIMATIC_MODELS = ['70cc26', '70cc85']
 #CLIMATIC_MODELS = [] #['70cc26', '70cc85']
 # CLIMATIC_MODELS = CLIMATIC_MODELS + list(map(lambda x: x.replace('cc', 'mc'), CLIMATIC_MODELS))
 CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
-CLIMATIC_MODELS += ['_lig']
+CLIMATIC_MODELS = ['_cclgm', '_mrlgm', '_ccmid', '_mrmid']
+#CLIMATIC_MODELS += ['_lig']
 
 MODEL_SPECIES = ['esculenta',
                  'asphodelus',

@@ -70,29 +70,46 @@ PAST_FILE_PATTERN = '%s%s%s%s' + PAST_POSTFIX
 
 PAST_PERIOD = ['lgm', 'mid']
 PAST_VARS = ['bi', 'tn', 'tx', 'pr']
-PAST_MODELS = ['cc', 'mr']
+LIG_PAST_VARS = {'bi': 'bio', 'tn': 'tmin','tx': 'tmax','pr': 'prec'}
+PAST_MODELS = ['cc', 'mr', 'lig']
 PAST_MONTHS = map(str, range(1, 13))
 for model, period, var, month  in product(PAST_MODELS,
                                           PAST_PERIOD,
                                           PAST_VARS,
                                           PAST_MONTHS):
-    path_pat = PAST_PATH_PATTERN % (model, period, var)
-    file_pat = PAST_FILE_PATTERN % (model, period, var, month)
-    DATA_PATTERNS.update({
-        PAST_VARS_MAPPING[var] + month + '_' + model + period: {'filename': os.path.join(path_pat, file_pat)}
-                         })
-    if var == 'bi':
-        for m in range(13, 20):
-            file_pat = PAST_FILE_PATTERN % (model, period, var, m)
-            DATA_PATTERNS.update({
-                PAST_VARS_MAPPING[var] + str(m) + '_' + model+period: {
-                'filename': os.path.join(path_pat, file_pat)}
-            })
+    if model != 'lig':
+        path_pat = PAST_PATH_PATTERN % (model, period, var)
+        file_pat = PAST_FILE_PATTERN % (model, period, var, month)
+        DATA_PATTERNS.update({
+            PAST_VARS_MAPPING[var] + month + '_' + model + period: {'filename': os.path.join(path_pat, file_pat)}
+                            })
 
-# ----------------------------------------------------------
+        if var == 'bi':
+            for m in range(13, 20):
+                file_pat = PAST_FILE_PATTERN % (model, period, var, m)
+                DATA_PATTERNS.update({
+                    PAST_VARS_MAPPING[var] + str(m) + '_' + model+period: {
+                    'filename': os.path.join(path_pat, file_pat)}
+                })
+    else:
+        path_pat = PAST_PATH_PATTERN % (model, var, '')
+        file_pat = PAST_FILE_PATTERN % (model, '_30s_', LIG_PAST_VARS[var], '_' + str(month))
+        DATA_PATTERNS.update({
+                    PAST_VARS_MAPPING[var] + str(month) + '_' + model: {
+                    'filename': os.path.join(path_pat, file_pat)}
+                             })
+        if var == 'bi':
+            for m in range(13, 20):
+                file_pat = PAST_FILE_PATTERN % (model, '_30s_',
+                                                LIG_PAST_VARS[var],
+                                                '_' + str(m))
+                DATA_PATTERNS.update({
+                    PAST_VARS_MAPPING[var] + str(m) + '_' + model: {
+                    'filename': os.path.join(path_pat, file_pat)}
+                })
 
 
-
+# -----------------------------------------------------------------------
 
 
 # ------------ Present & future & past data predictors ------------------
@@ -119,6 +136,7 @@ PREDICTOR_LOADERS.update({'IO': 'get_IO'})
 # -------------------------------------------------------
 # Print constructed patterns to stdout
 # print("=" * 80)
-# print(DATA_PATTERNS)
+for  key in DATA_PATTERNS:
+    print(key, DATA_PATTERNS[key])
 # print("=" * 80)
 # -------------------------------------------------------
