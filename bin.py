@@ -28,11 +28,10 @@ from collections import defaultdict
 import matplotlib
 
 
-
 MAP_RESOLUTION = 500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
-DATA_FILE_NAMES = ['all_species_final.csv',# all data files should be in the same format
+DATA_FILE_NAMES = ['all_species_final.csv',  #  all data files should be in the same format
                    'new_species.csv',
                    'Filipendula.csv',
                    #'Giant_herbs.csv',

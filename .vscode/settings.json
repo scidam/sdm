@@ -1,0 +1,6 @@
+{
+    "python.linting.pylintCategorySeverity.error": "Warning",
+    "python.linting.pylintCategorySeverity.fatal": "Warning",
+    "python.linting.pylintUseMinimalCheckers": false,
+    "python.pythonPath": "/home/dmitry/.pyenv/versions/scipy/bin/python"
+}
