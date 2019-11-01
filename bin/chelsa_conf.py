@@ -1,10 +1,22 @@
-# coding: utf-8
+# -*- coding:utf-8 -*-
+"""
+Created Date: Thursday October 31st 2019
+Author: Dmitry Kislov
+E-mail: kislov@easydan.com
+-----
+Last Modified: Thursday, October 31st 2019, 3:26:42 pm
+Modified By: Dmitry Kislov
+-----
+Copyright (c) 2019
+"""
+
+
 
 import os
 from itertools import product
 
 LARGE_VALUE = 9000.0  # used to indicate large value in geotiff files (NA- values)
-DATA_PATH = '../chelsa'
+DATA_PATH = './chelsa'
 
 DATA_EXT = '.tif'
 
@@ -73,12 +85,13 @@ for pdir, var in zip(FUTURE_DIRS, FUTURE_VARS):
             else:
                 FUTURE_FILE_TEMPLATE = FUTURE_FILE_TEMPLATE2
             file_name = FUTURE_FILE_TEMPLATE.format(model=model, year=year, path=path,
-                                pref=future_var_mapper(var), month=str(month)) + DATA_EXT
+                                                    pref=future_var_mapper(var),
+                                                    month=str(month)) + DATA_EXT
             ind += 1
             DATA_PATTERNS.update({
                 var.upper() + month +'_' + year + model + path: {'filename': os.path.join(path_name, file_name)}
             })
-        
+
 # -----------------------------------------------------
 
 # ------------- Data from the past --------------------
@@ -103,7 +116,7 @@ print("Checking source data files...")
 for k, v in DATA_PATTERNS.items():
     if not os.path.exists(v['filename']):
         print("File for %s not found: %s" % (k, v['filename']))
-       
+
 print("All done.")
 
 

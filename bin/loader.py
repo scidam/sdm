@@ -1,10 +1,21 @@
-#coding: utf-8
+# -*- coding:utf-8 -*-
+"""
+Created Date: Thursday October 31st 2019
+Author: Dmitry Kislov
+E-mail: kislov@easydan.com
+-----
+Last Modified: Friday, November 1st 2019, 9:19:02 am
+Modified By: Dmitry Kislov
+-----
+Copyright (c) 2019
+"""
+
 
 import numpy as np
 from functools import lru_cache
 import re
 
-from .conf import DATA_PATTERNS, PREDICTOR_LOADERS, LARGE_VALUE
+from .chelsa_conf import DATA_PATTERNS, PREDICTOR_LOADERS, LARGE_VALUE
 from osgeo import gdal
 from osgeo import osr
 
@@ -15,10 +26,10 @@ def array_to_raster(array, lats, lons,  fname):
     :param array: ndarray
     """
     # You need to get those values like you did.
-    
+
     SourceDS = gdal.Open(DATA_PATTERNS['BIO1']['filename'], gdal.GA_ReadOnly)
     Projection = osr.SpatialReference()
-    Projection.ImportFromWkt(SourceDS.GetProjectionRef())    
+    Projection.ImportFromWkt(SourceDS.GetProjectionRef())
     x_pixels, y_pixels = array.shape
     XPIXEL_SIZE = (lons[1] - lons[0]) / float(x_pixels)
     YPIXEL_SIZE = (lats[1] - lats[0]) / float(y_pixels)
@@ -46,32 +57,29 @@ def array_to_raster(array, lats, lons,  fname):
 
 
 def get_data_by_coordinate_np(lats, lons, array, xmin, xres, ymax, yres):
-    lat_inds = ((lats - ymax) / yres).astype(np.int16)
-    lon_inds = ((lons - xmin) / xres).astype(np.int16)
+    lat_inds = ((lats - ymax) / yres).astype(np.int32)
+    lon_inds = ((lons - xmin) / xres).astype(np.int32)
     array = array[lat_inds, lon_inds]
     array[np.abs(array) > LARGE_VALUE] = np.nan
     return array
 
-@lru_cache(maxsize=20)
+
+@lru_cache(maxsize=200)
 def get_bio_data(lats, lons, name):
     if name not in DATA_PATTERNS:
         raise BaseException("Couldn't find the <%s> name in the declared datasets" % name)
     data = gdal.Open(DATA_PATTERNS[name]['filename'])
     geoinfo = data.GetGeoTransform()
-    xmin = geoinfo[0]
-    xres = geoinfo[1]
-    ymax = geoinfo[3]
-    yrot = geoinfo[4]
-    xrot = geoinfo[2]
-    yres = geoinfo[-1]
+    xmin, xres, ymax, yrot, xrot, yres = (geoinfo[0], geoinfo[1], geoinfo[3],
+                                          geoinfo[4], geoinfo[2], geoinfo[-1])
     if not np.isclose(xrot, 0) or not np.isclose(yrot, 0):
         raise BaseException("xrot and yrot should be 0")
     array = data.ReadAsArray()
     del data
     result = get_data_by_coordinate_np(np.array(lats, dtype=np.float64),
-                                  np.array(lons, dtype=np.float64),
-                                  np.array(array, dtype=np.float64),
-                                  xmin, xres, ymax, yres)
+                                       np.array(lons, dtype=np.float64),
+                                       np.array(array, dtype=np.float16),
+                                       xmin, xres, ymax, yres)
     #if (('TMIN' in name) or ('TMAX' in name)) and ('_' in name):
     #    return result / 10.0
     #else:
@@ -94,7 +102,8 @@ def get_kiras_indecies(lats, lons, name, postfix=''):
     if 'WKI' in name:
         t = 10.0 * float(name.replace('WKI', ''))
     elif 'CKI' in name:
-        t = -10.0 * float(name.replace('CKI', '')) # needs to be checked for correctness !!!
+        t = -10.0 * float(name.replace('CKI', '')) 
+        # needs to be checked for correctness !!!
     else:
         raise BaseException("Illegal name of Kira's index")
     result = np.zeros(np.shape(lats))
@@ -190,6 +199,7 @@ def get_IT(lats, lons, name, postfix=''):
     tavg = get_bio_data(lats, lons, 'BIO1' + postfix)
     return tmin + tmax + tavg
 
+
 def get_IO(lats, lons, name, postfix=''):
     prec_warm = get_precipitation_kiras(lats, lons, 'PWKI0', postfix=postfix)
     prec_cold = get_precipitation_kiras(lats, lons, 'PCKI0', postfix=postfix)
@@ -204,6 +214,7 @@ def get_predictor_data(lats, lons, name='BIO1', postfix=''):
         raise BaseException("Couldn't find registered extractor function for this name: %s" % name)
 
     if PREDICTOR_LOADERS[name] in globals():
+        
         try:
             result = globals()[PREDICTOR_LOADERS[name]](lats, lons, name, postfix=postfix)
         except TypeError:
@@ -212,8 +223,3 @@ def get_predictor_data(lats, lons, name='BIO1', postfix=''):
             return result
     else:
         raise BaseException("The method for computation of %s isn't defined" % name)
-
-
-
-
-

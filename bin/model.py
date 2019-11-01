@@ -353,7 +353,7 @@ def plot_map(lat_range, lon_range, resolution, clf, optimal_vars, train_df=None,
         return presence_proba_current.reshape(LATS_GRID.shape).T
 
     LONS = np.linspace(*lon_range, resolution)
-    if resolution <= 1000:
+    if resolution <= 5000:
         LATS = np.linspace(*lat_range, resolution)
         presence_proba_current = get_probabilities(LATS, LONS)
     else:

@@ -5,7 +5,7 @@ import os
 from IPython.core.display import display, HTML
 from bin.model import *
 from sklearn.pipeline import Pipeline
-from bin.conf import PREDICTOR_LOADERS
+from bin.chelsa_conf import PREDICTOR_LOADERS
 from bin.loader import get_predictor_data
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.feature_selection import RFECV
@@ -31,9 +31,12 @@ import matplotlib
 MAP_RESOLUTION = 500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
-DATA_FILE_NAMES = ['all_species_final.csv',  #  all data files should be in the same format
+DATA_FILE_NAMES = [
+                   'all_species_final.csv',  #  all data files should be in the same format
                    'new_species.csv',
                    'Filipendula.csv',
+                   'Pinus_koraiensis.csv',
+                   'Picea_jezoensis.csv',
                    #'Giant_herbs.csv',
                    'Petasites.csv',
                    'gbif_new.csv',
@@ -45,10 +48,10 @@ DATA_FILE_NAMES = ['all_species_final.csv',  #  all data files should be in the 
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
 #CLIMATIC_MODELS = #['50cc26','50cc85','50cc45', '70cc26', '70cc85','70cc45']
-CLIMATIC_MODELS = ['70cc26', '70cc85']
+#CLIMATIC_MODELS = ['70cc26', '70cc85']
 # CLIMATIC_MODELS = CLIMATIC_MODELS + list(map(lambda x: x.replace('cc', 'mc'), CLIMATIC_MODELS))
-CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
-CLIMATIC_MODELS += ['_cclgm', ]
+# CLIMATIC_MODELS = list(map(lambda x: '_' + x, CLIMATIC_MODELS))
+# CLIMATIC_MODELS += ['_cclgm', ]
 MODEL_SPECIES = [
            #   'filipendula',
            #   'senecio',
@@ -56,7 +59,9 @@ MODEL_SPECIES = [
            #   'angelica',
            #   'heracleum',
            #   'reynoutria'
-              'giant'
+               'pinus',
+               'picea'
+
 
 #                 'giant'
                  #'quercus mongolica',
@@ -75,7 +80,7 @@ MODEL_SPECIES = [
                 ] # all  species should be given in lowercase format
 
 # Initial set of variables (see conf.py: PREDICTOR_LOADERS parameter for details)
-VARIABLE_SET = ('WKI5', 'PCKI0','PWKI0', 'CKI5', 'IC')
+VARIABLE_SET = ('WKI5', 'PCKI0', 'PWKI0', 'CKI5', 'IC')
 #VARIABLE_SET += tuple(['WIND' + str(k) for k in range(1, 13)])#
 #VARIABLE_SET = ('BIO1',)
 #VARIABLE_SET += tuple(['WKI' + str(k) for k in range(2, 7)])
@@ -91,7 +96,8 @@ VARIABLE_SET = tuple(set(VARIABLE_SET)) # remove duplicate variables if they are
 CLASSIFIERS = [# ('tree', DecisionTreeClassifier(random_state=10)),
                 #('NB', GaussianNB()),
                 #('MaxEnt', LogisticRegression()),
-                ('RF_100', RandomForestClassifier(n_estimators=100, random_state=10)),
+                ('RF_100', RandomForestClassifier(n_estimators=100,
+                            random_state=10)),
               #  ('ada', AdaBoostClassifier(DecisionTreeClassifier(max_depth=7),
               #                             n_estimators=200, random_state=10))
 
@@ -132,17 +138,17 @@ parameter_grid_search = [
                 {'ps_density': 4,
                  'density': 4,
                  'similarity': 0.0,
-                 'ms':  ['giant', 'filipendula']
+                # 'ms':  ['giant', 'filipendula']
                              },
                 {'ps_density': 4,
                  'density': 2,
                  'similarity': 0.0,
-                 'ms':  ['reynoutria',]
+                # 'ms':  ['reynoutria',]
                  },
                 {'ps_density': 4,
                  'density': 3,
                  'similarity': 0.0,
-                 'ms':  ['petasites', 'heracleum', 'angelica']
+                 #'ms':  ['petasites', 'heracleum', 'angelica']
                  },
                 # {'ps_density': 4,
                 #  'density': 4,
@@ -159,7 +165,6 @@ parameter_grid_search = [
                    #'similarity': 0.0,
                    #},
                  ]
-
 
 def make_response(edges, xdata,  ydata, sigma=7):
     newx, newy = [], []
@@ -272,7 +277,7 @@ for ind, grid in enumerate(parameter_grid_search):
     #           'heracleum',
     #           'reynoutria'], overwrite=True).fit_transform(original_presence_data)
     #     original_presence_data.species = 'all'
-    MODEL_SPECIES = grid['ms']
+    # MODEL_SPECIES = grid['ms']
     for species in MODEL_SPECIES:
         print("Processing: sp = %s" % species)
         classifier_stats_acc, classifier_stats_auc = [], []
