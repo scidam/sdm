@@ -91,11 +91,12 @@ class DensityTweaker(PreprocessingMixin):
         if len(to_remove) == 0:
             print("Nothing to remove; points density is good.")
         else:
+            print("REMOVED POINTS: for %s"  % df_.species[0])
             print("Points were removed, total: %s" % len(to_remove))
         to_remove = list(set(to_remove))
-        print("REMOVED POINTS: for %s"  % df_.species[0])
-        for ind, row in df_.drop(to_remove).iterrows():
-            print('%s, %s' % (row.latitude, row.longitude))
+
+        # for ind, row in df_.drop(to_remove).iterrows():
+        #     print('%s, %s' % (row.latitude, row.longitude))
         return df_.drop(to_remove).reset_index(drop=True)
 
 
@@ -179,8 +180,9 @@ class FillPseudoAbsenceData(PreprocessingMixin):
         res = df.copy()
         assert len(df.species.unique()) == 1, "DataFrame should contain only one species"
         sp = df.species.unique()[-1]
-        if self.area_ is None:
+        if 'absence' not in res.columns:
             res['absence'] = False
+        if self.area_ is None:
             if sp in absence_data:
                 for ar in absence_data[sp]:
                     res = self.update_df(res, ar, sp)

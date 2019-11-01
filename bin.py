@@ -18,7 +18,6 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import confusion_matrix
-from sklearn import cross_validation
 from sklearn.manifold import MDS
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
@@ -28,7 +27,7 @@ from collections import defaultdict
 import matplotlib
 
 
-MAP_RESOLUTION = 500 # 5000 is default
+MAP_RESOLUTION = 4500 # 5000 is default
 SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
 DATA_FILE_NAMES = [
@@ -59,7 +58,7 @@ MODEL_SPECIES = [
            #   'angelica',
            #   'heracleum',
            #   'reynoutria'
-               'pinus',
+           #    'pinus',
                'picea'
 
 
@@ -135,18 +134,18 @@ print("Unique species: ", np.unique(original_presence_data.species))
 
 
 parameter_grid_search = [
-                {'ps_density': 4,
-                 'density': 4,
+                {'ps_density': 3,
+                #  'density': 4,
                  'similarity': 0.0,
                 # 'ms':  ['giant', 'filipendula']
                              },
-                {'ps_density': 4,
-                 'density': 2,
+                {'ps_density': 1,
+                #  'density': 2,
                  'similarity': 0.0,
                 # 'ms':  ['reynoutria',]
                  },
-                {'ps_density': 4,
-                 'density': 3,
+                {'ps_density': 0.5,
+                #  'density': 3,
                  'similarity': 0.0,
                  #'ms':  ['petasites', 'heracleum', 'angelica']
                  },
@@ -284,10 +283,10 @@ for ind, grid in enumerate(parameter_grid_search):
         model = Pipeline([('select_species', SelectSpecies(species)),
                           ('select_within_area', SelectDataWithinArea(bbox=[22, 100, 65, 169])),
                           ('prune_suspicious', PruneSuspiciousCoords()),
-                          ('dtweak', DensityTweaker(density=40)),
-                          ('ps_absence', FillPseudoAbsenceData(density=grid['ps_density'])),
-                          ('fill_absence', FillPseudoAbsenceData(density=grid['density'],
-                                                 area=[22, 100, 65, 169])),
+                          ('dtweak', DensityTweaker(density=20)),
+                          ('ps_absence', FillPseudoAbsenceData(density=grid['ps_density'], area=[22, 100, 65, 169])),
+                        #   ('fill_absence', FillPseudoAbsenceData(density=grid['density'],
+                        #                                          area=[22, 100, 65, 169])),
                           ('fill_env', FillEnvironmentalData(VARIABLE_SET)),
                           # ('fill_by_cond',
                           #  FillPseudoAbsenceByConditions(species=species,
@@ -295,8 +294,8 @@ for ind, grid in enumerate(parameter_grid_search):
                           #                                density=grid['density'], #0.1 for trees
                           #                                area=[(22, 100),
                           #                                      (65, 169)])),
-                          ('exclude_by_corr', CorrelationPruner(threshold=0.9999,
-                                                                variables=VARIABLE_SET))
+                        #   ('exclude_by_corr', CorrelationPruner(threshold=0.9999,
+                        #                                         variables=VARIABLE_SET))
                           ])
 
         print("Constructing the dataset...")
