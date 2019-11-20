@@ -27,22 +27,22 @@ from collections import defaultdict
 import matplotlib
 
 
-MAP_RESOLUTION = 4500 # 5000 is default
-SOURCE_DATA_PATH = './data' # relative (or absolute) path to the data directory
+MAP_RESOLUTION = 500 # 5000 is default
+SOURCE_DATA_PATH = './data/trees' # relative (or absolute) path to the data directory
 CSV_SEPARATOR = r';' # separator used in csv data files
 DATA_FILE_NAMES = [
-                   'all_species_final.csv',  #  all data files should be in the same format
-                   'new_species.csv',
-                   'Filipendula.csv',
-                   'Pinus_koraiensis.csv',
+                   #'all_species_final.csv',  #  all data files should be in the same format
+                   #'new_species.csv',
+                   #'Filipendula.csv',
+                   #'Pinus_koraiensis.csv',
                    'Picea_jezoensis.csv',
                    #'Giant_herbs.csv',
-                   'Petasites.csv',
-                   'gbif_new.csv',
-                   'giant_herb_fulldata.csv',
-                   'Species_FINAL.csv',
-                   'heracleum_addition.csv',
-                   'points_giant_herb.csv'
+                   #'Petasites.csv',
+                   #'gbif_new.csv',
+                   #'giant_herb_fulldata.csv',
+                   #'Species_FINAL.csv',
+                   #'heracleum_addition.csv',
+                   #'points_giant_herb.csv'
                    ]
 ALLOWED_COLUMNS = ['species', 'latitude', 'longitude'] # only these columns will be retained for computations
 COLUMNS_DTYPES = [np.str, np.float64, np.float64] # Should have the same length as ALLOWED_COLUMNS
@@ -60,8 +60,6 @@ MODEL_SPECIES = [
            #   'reynoutria'
            #    'pinus',
                'picea'
-
-
 #                 'giant'
                  #'quercus mongolica',
                  #'kalopanax septemlobus',
@@ -95,14 +93,11 @@ VARIABLE_SET = tuple(set(VARIABLE_SET)) # remove duplicate variables if they are
 CLASSIFIERS = [# ('tree', DecisionTreeClassifier(random_state=10)),
                 #('NB', GaussianNB()),
                 #('MaxEnt', LogisticRegression()),
-                ('RF_100', RandomForestClassifier(n_estimators=100,
-                            random_state=10)),
+                 ('RF_100', RandomForestClassifier(n_estimators=100, random_state=10)),
               #  ('ada', AdaBoostClassifier(DecisionTreeClassifier(max_depth=7),
               #                             n_estimators=200, random_state=10))
-
-
-                #('SVM', SVC(kernel='linear'))
-                #('LDA', LinearDiscriminantAnalysis())
+               #('SVM', SVC(kernel='linear'))
+               #('LDA', LinearDiscriminantAnalysis())
               ]
 KFOLDS_NUMBER = 20
 PSEUDO_ABSENCE_DENSITY = 0.02
@@ -277,6 +272,7 @@ for ind, grid in enumerate(parameter_grid_search):
     #           'reynoutria'], overwrite=True).fit_transform(original_presence_data)
     #     original_presence_data.species = 'all'
     # MODEL_SPECIES = grid['ms']
+
     for species in MODEL_SPECIES:
         print("Processing: sp = %s" % species)
         classifier_stats_acc, classifier_stats_auc = [], []
