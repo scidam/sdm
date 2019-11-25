@@ -1,3 +1,16 @@
+# -*- coding:utf-8 -*-
+"""
+Created Date: Tuesday October 29th 2019
+Author: Dmitry Kislov
+E-mail: kislov@easydan.com
+-----
+Last Modified: Tuesday, November 26th 2019, 9:36:52 am
+Modified By: Dmitry Kislov
+-----
+Copyright (c) 2019
+"""
+
+
 import numpy as np
 import pandas as pd
 import gc
